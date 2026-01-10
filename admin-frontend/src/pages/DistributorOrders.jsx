@@ -36,16 +36,21 @@ const DistributorOrders = () => {
     };
   }, []);
 
-  const handleCompleteOrder = async (orderId) => {
+  const handleToggleOrderDetail = async (order) => {
+    const isExpanded = expandedOrderId === order.id;
+    setExpandedOrderId(isExpanded ? null : order.id);
+    if (isExpanded || order.status !== "待提货") {
+      return;
+    }
     setOrderMessage("");
     setOrderError("");
     try {
-      const updated = await apiRequest(`/orders/${orderId}`, {
+      const updated = await apiRequest(`/orders/${order.id}`, {
         method: "PATCH",
         body: JSON.stringify({ status: "已完成" })
       });
-      setOrders((prev) => prev.map((order) => (order.id === orderId ? updated : order)));
-      setOrderMessage("订单状态已更新为已完成");
+      setOrders((prev) => prev.map((item) => (item.id === order.id ? updated : item)));
+      setOrderMessage("查看详情后订单已自动标记为已完成");
     } catch (error) {
       setOrderError("更新订单状态失败");
     }
@@ -83,7 +88,7 @@ const DistributorOrders = () => {
       <section className="dashboard-panel">
         <header>
           <h3>订单列表</h3>
-          <span>待提货可标记为已完成</span>
+          <span>查看详情会自动标记为已完成</span>
         </header>
         <div className="order-filters">
           <div className="order-tabs">
@@ -140,21 +145,10 @@ const DistributorOrders = () => {
                           <button
                             type="button"
                             className="ghost-button"
-                            onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                            onClick={() => handleToggleOrderDetail(order)}
                           >
                             {isExpanded ? "收起详情" : "查看详情"}
                           </button>
-                          {order.status === "待提货" ? (
-                            <button
-                              type="button"
-                              className="ghost-button"
-                              onClick={() => handleCompleteOrder(order.id)}
-                            >
-                              标记已完成
-                            </button>
-                          ) : (
-                            <span className="muted">-</span>
-                          )}
                         </div>
                       </td>
                     </tr>

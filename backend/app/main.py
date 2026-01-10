@@ -322,14 +322,33 @@ def distributor_summary(
     user = session.get(User, user_id)
     if not user or user.role != "distributor":
         raise HTTPException(status_code=404, detail="Distributor not found")
+    account = session.exec(
+        select(AuthAccount).where(AuthAccount.user_id == user_id)
+    ).first()
     orders = session.exec(select(Order).where(Order.user_id == user_id)).all()
     total_orders = len(orders)
     commission = sum(order.total for order in orders) * 0.15
+    completed_orders = [order for order in orders if order.status == "已完成"]
+    now = datetime.utcnow()
+    today = now.date()
+    daily_completed_orders = len(
+        [order for order in completed_orders if order.created_at.date() == today]
+    )
+    monthly_completed_orders = len(
+        [
+            order
+            for order in completed_orders
+            if order.created_at.year == now.year and order.created_at.month == now.month
+        ]
+    )
     return DistributorSummary(
         distributor_id=user.id,
+        code=account.username if account else None,
         name=user.name,
         pickup_address=user.pickup_address,
         total_orders=total_orders,
+        daily_completed_orders=daily_completed_orders,
+        monthly_completed_orders=monthly_completed_orders,
         commission=commission,
         wallet_balance=1200.0,
         coupons=3,

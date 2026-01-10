@@ -56,6 +56,14 @@ const DistributorDashboard = () => {
           <strong>{summary ? summary.total_orders : "--"}</strong>
         </div>
         <div>
+          <span>今日已完成订单</span>
+          <strong>{summary ? summary.daily_completed_orders : "--"}</strong>
+        </div>
+        <div>
+          <span>本月已完成订单</span>
+          <strong>{summary ? summary.monthly_completed_orders : "--"}</strong>
+        </div>
+        <div>
           <span>客户复购率</span>
           <strong>48%</strong>
         </div>
