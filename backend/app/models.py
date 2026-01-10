@@ -26,3 +26,11 @@ class Order(SQLModel, table=True):
     status: str
     total: float
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class AuthAccount(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str
+    password: str
+    role: str
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")

@@ -229,6 +229,14 @@ a {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  margin: 10px 0 0;
+}
+
 .product-card {
   background: #f9f9f9;
   border-radius: 16px;
@@ -297,6 +305,12 @@ a {
   border-radius: 14px;
   border: 1px solid #eee;
   font-size: 14px;
+}
+
+.form-error {
+  margin: 0;
+  color: #d14343;
+  font-size: 13px;
 }
 
 .code-row div {

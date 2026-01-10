@@ -45,6 +45,21 @@ class UserRead(BaseModel):
     role: str
 
 
+class AuthLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class AuthLoginResponse(BaseModel):
+    role: str
+    user_id: int
+    name: str
+
+
+class PhoneLoginRequest(BaseModel):
+    phone: str
+
+
 class OrderStatusUpdate(BaseModel):
     status: str
 
