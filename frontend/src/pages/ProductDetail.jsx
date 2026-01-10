@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import useProducts from "../hooks/useProducts";
 import { resolveImageUrl } from "../utils/products";
@@ -14,7 +14,6 @@ const ProductDetail = () => {
   const distributor = useDistributor();
   const supplier = useSupplier();
   const { addItem } = useCart();
-  const navigate = useNavigate();
   const supplierPath = (path) => buildSupplierPath(supplier, path);
 
   const product = useMemo(
@@ -30,7 +29,6 @@ const ProductDetail = () => {
       return;
     }
     addItem(product, quantity);
-    navigate(supplierPath("/cart"));
   };
 
   if (loading) {

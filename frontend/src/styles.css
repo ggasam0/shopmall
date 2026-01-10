@@ -480,6 +480,76 @@ a {
   gap: 12px;
 }
 
+.order-history {
+  background: #fff;
+  margin-top: 16px;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.order-history header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.order-card {
+  background: #f9f9f9;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.order-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.order-meta h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.status-tag {
+  background: #fff0ef;
+  color: #ff5d5d;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.order-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: #555;
+}
+
+.order-card li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
 .status-item {
   display: flex;
   flex-direction: column;
@@ -777,6 +847,17 @@ a {
 .checkout-bar strong {
   font-size: 20px;
   color: #ff5d5d;
+}
+
+.checkout-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.checkout-actions .form-error {
+  text-align: right;
 }
 
 .pickup-card {

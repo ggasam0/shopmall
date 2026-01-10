@@ -5,7 +5,7 @@ import { useSupplier } from "../store/supplier";
 import { buildSupplierPath } from "../utils/supplier";
 
 const defaultStatus = [
-  { label: "待付款", icon: "💳" },
+  { label: "待提货", icon: "🧾" },
   { label: "待发货", icon: "🚚", badge: 0 },
   { label: "待收货", icon: "📦" },
   { label: "已完成", icon: "✅" }
@@ -48,12 +48,12 @@ const Profile = () => {
   }, [user]);
 
   const orderStatus = useMemo(() => {
-    const pendingPayment = orders.filter((order) => order.status === "待付款").length;
+    const pendingPickup = orders.filter((order) => order.status === "待提货").length;
     const pendingShipment = orders.filter((order) => order.status === "待发货").length;
     const pendingReceive = orders.filter((order) => order.status === "待收货").length;
     const completed = orders.filter((order) => order.status === "已完成").length;
     return [
-      { label: "待付款", icon: "💳", badge: pendingPayment },
+      { label: "待提货", icon: "🧾", badge: pendingPickup },
       { label: "待发货", icon: "🚚", badge: pendingShipment },
       { label: "待收货", icon: "📦", badge: pendingReceive },
       { label: "已完成", icon: "✅", badge: completed }
@@ -104,6 +104,46 @@ const Profile = () => {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="order-history">
+        <header>
+          <h3>历史订单</h3>
+          <span>到店付款提货</span>
+        </header>
+        {!user ? (
+          <p className="empty-state">登录后查看订单记录。</p>
+        ) : orders.length === 0 ? (
+          <p className="empty-state">暂无历史订单。</p>
+        ) : (
+          <div className="order-list">
+            {orders.map((order) => (
+              <article key={order.id} className="order-card">
+                <div className="order-meta">
+                  <div>
+                    <h4>订单号：{order.order_number}</h4>
+                    <p className="muted">
+                      {new Date(order.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <span className="status-tag">{order.status}</span>
+                </div>
+                <ul>
+                  {(order.items || []).map((item) => (
+                    <li key={`${order.id}-${item.id}`}>
+                      <span>{item.name}</span>
+                      <span>× {item.quantity}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="order-total">
+                  <span>合计</span>
+                  <strong>¥{order.total.toFixed(2)}</strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="profile-links">

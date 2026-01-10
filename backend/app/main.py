@@ -1,4 +1,6 @@
+from datetime import datetime
 from pathlib import Path
+import random
 import re
 import zipfile
 import xml.etree.ElementTree as ET
@@ -16,6 +18,7 @@ from app.schemas import (
     AuthLoginResponse,
     DashboardSummary,
     DistributorSummary,
+    OrderCreate,
     OrderRead,
     OrderStatusUpdate,
     PhoneLoginRequest,
@@ -103,6 +106,12 @@ def _load_products_from_xlsx() -> list[dict]:
     return products
 
 
+def _generate_order_number() -> str:
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    suffix = random.randint(1000, 9999)
+    return f"WD{timestamp}{suffix}"
+
+
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
@@ -153,11 +162,29 @@ def on_startup() -> None:
                 session.add(
                     Order(
                         user_id=distributor_user.id,
-                        status="待发货",
+                        order_number=_generate_order_number(),
+                        status="待提货",
                         total=298.0,
+                        items=[],
                     )
                 )
                 session.commit()
+
+        orders_missing_number = session.exec(
+            select(Order).where(Order.order_number.is_(None))
+        ).all()
+        for order in orders_missing_number:
+            order.order_number = _generate_order_number()
+            session.add(order)
+        if orders_missing_number:
+            session.commit()
+
+        orders_missing_items = session.exec(select(Order).where(Order.items.is_(None))).all()
+        for order in orders_missing_items:
+            order.items = []
+            session.add(order)
+        if orders_missing_items:
+            session.commit()
 
 
 @app.post("/auth/login", response_model=AuthLoginResponse)
@@ -219,6 +246,23 @@ def list_suppliers() -> list[SupplierRead]:
 @app.get("/orders", response_model=list[OrderRead])
 def list_orders(session: Session = Depends(get_session)) -> list[OrderRead]:
     return session.exec(select(Order)).all()
+
+
+@app.post("/orders", response_model=OrderRead)
+def create_order(
+    payload: OrderCreate, session: Session = Depends(get_session)
+) -> OrderRead:
+    order = Order(
+        user_id=payload.user_id,
+        order_number=_generate_order_number(),
+        status="待提货",
+        total=payload.total,
+        items=[item.model_dump() for item in payload.items],
+    )
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+    return order
 
 
 @app.get("/users/{user_id}/orders", response_model=list[OrderRead])
