@@ -3,18 +3,22 @@ import { useCart } from "../store/cart";
 import { resolveImageUrl } from "../utils/products";
 import { useDistributor } from "../store/distributor";
 import { getStockForDistributor } from "../utils/distributor";
+import { useSupplier } from "../store/supplier";
+import { buildSupplierPath } from "../utils/supplier";
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, total } = useCart();
   const distributor = useDistributor();
+  const supplier = useSupplier();
   const navigate = useNavigate();
+  const supplierPath = (path) => buildSupplierPath(supplier, path);
 
   if (items.length === 0) {
     return (
       <main className="page cart">
         <h2>购物车</h2>
         <p className="empty-state">购物车还是空的，快去选购吧。</p>
-        <Link className="primary-button" to="/">
+        <Link className="primary-button" to={supplierPath("/")}>
           继续选购
         </Link>
       </main>
@@ -28,7 +32,7 @@ const Cart = () => {
           <p className="muted">我的购物车</p>
           <h2>共 {items.length} 件商品</h2>
         </div>
-        <Link className="ghost-link" to="/">
+        <Link className="ghost-link" to={supplierPath("/")}>
           继续选购
         </Link>
       </header>
@@ -84,7 +88,11 @@ const Cart = () => {
           <p>合计</p>
           <strong>¥{total.toFixed(2)}</strong>
         </div>
-        <button className="primary-button" type="button" onClick={() => navigate("/checkout")}>
+        <button
+          className="primary-button"
+          type="button"
+          onClick={() => navigate(supplierPath("/checkout"))}
+        >
           生成订单
         </button>
       </footer>

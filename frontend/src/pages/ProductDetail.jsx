@@ -5,13 +5,17 @@ import { resolveImageUrl } from "../utils/products";
 import { getStockForDistributor } from "../utils/distributor";
 import { useDistributor } from "../store/distributor";
 import { useCart } from "../store/cart";
+import { useSupplier } from "../store/supplier";
+import { buildSupplierPath } from "../utils/supplier";
 
 const ProductDetail = () => {
   const { productId } = useParams();
   const { products, loading } = useProducts();
   const distributor = useDistributor();
+  const supplier = useSupplier();
   const { addItem } = useCart();
   const navigate = useNavigate();
+  const supplierPath = (path) => buildSupplierPath(supplier, path);
 
   const product = useMemo(
     () => products.find((item) => String(item.id) === String(productId)),
@@ -26,7 +30,7 @@ const ProductDetail = () => {
       return;
     }
     addItem(product, quantity);
-    navigate("/cart");
+    navigate(supplierPath("/cart"));
   };
 
   if (loading) {
@@ -41,7 +45,7 @@ const ProductDetail = () => {
     return (
       <main className="page">
         <p>未找到该商品。</p>
-        <Link className="ghost-link" to="/">
+        <Link className="ghost-link" to={supplierPath("/")}>
           返回首页
         </Link>
       </main>
@@ -55,7 +59,10 @@ const ProductDetail = () => {
           <p className="muted">商品详情</p>
           <h2>{product.name}</h2>
         </div>
-        <Link className="ghost-link" to={`/category/${encodeURIComponent(product.category)}`}>
+        <Link
+          className="ghost-link"
+          to={supplierPath(`/category/${encodeURIComponent(product.category)}`)}
+        >
           查看同类
         </Link>
       </header>
@@ -101,7 +108,7 @@ const ProductDetail = () => {
           <button className="primary-button" type="button" onClick={handleAddToCart}>
             加入购物车
           </button>
-          <Link className="ghost-link" to="/cart">
+          <Link className="ghost-link" to={supplierPath("/cart")}>
             去购物车查看
           </Link>
         </div>

@@ -10,6 +10,7 @@ import Checkout from "./pages/Checkout";
 import { DistributorProvider } from "./store/distributor";
 import { CartProvider } from "./store/cart";
 import { useDistributor } from "./store/distributor";
+import { SupplierProvider } from "./store/supplier";
 
 const AppContent = () => {
   const distributor = useDistributor();
@@ -20,13 +21,20 @@ const AppContent = () => {
         <TopNav />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/:supplierSuffix" element={<Home />} />
           <Route path="/d/:distributorCode" element={<Home />} />
           <Route path="/category/:categoryName" element={<CategoryList />} />
+          <Route path="/:supplierSuffix/category/:categoryName" element={<CategoryList />} />
           <Route path="/product/:productId" element={<ProductDetail />} />
+          <Route path="/:supplierSuffix/product/:productId" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/:supplierSuffix/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/:supplierSuffix/checkout" element={<Checkout />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/:supplierSuffix/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/:supplierSuffix/profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -36,9 +44,11 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <DistributorProvider>
-      <AppContent />
-    </DistributorProvider>
+    <SupplierProvider>
+      <DistributorProvider>
+        <AppContent />
+      </DistributorProvider>
+    </SupplierProvider>
   );
 };
 
