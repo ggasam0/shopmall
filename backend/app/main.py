@@ -12,7 +12,7 @@ from sqlmodel import Session, select
 from sqlalchemy import delete
 
 from app.config import AUTH_CONFIG, SUPPLIER_CONFIG
-from app.db import get_session, init_db
+from app.db import engine, get_session, init_db
 from app.models import AuthAccount, DistributorInventory, Order, Product, User
 from app.schemas import (
     AuthLoginRequest,
@@ -118,7 +118,7 @@ def _generate_order_number() -> str:
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
-    with get_session() as session:
+    with Session(engine) as session:
         for account in AUTH_CONFIG:
             user_payload = account["user"]
             user = session.exec(select(User).where(User.phone == user_payload["phone"])).first()
@@ -330,6 +330,10 @@ def update_order_status(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     order.status = payload.status
+    if payload.status == "已完成":
+        order.completed_at = datetime.utcnow()
+    else:
+        order.completed_at = None
     session.add(order)
     session.commit()
     session.refresh(order)
@@ -370,16 +374,21 @@ def distributor_summary(
     total_orders = len(orders)
     commission = sum(order.total for order in orders) * 0.15
     completed_orders = [order for order in orders if order.status == "已完成"]
+    completion_dates = {
+        order.id: (order.completed_at or order.created_at).date()
+        for order in completed_orders
+    }
     now = datetime.utcnow()
     today = now.date()
     daily_completed_orders = len(
-        [order for order in completed_orders if order.created_at.date() == today]
+        [order for order in completed_orders if completion_dates[order.id] == today]
     )
     monthly_completed_orders = len(
         [
             order
             for order in completed_orders
-            if order.created_at.year == now.year and order.created_at.month == now.month
+            if (order.completed_at or order.created_at).year == now.year
+            and (order.completed_at or order.created_at).month == now.month
         ]
     )
     daily_completed_order_series = []
@@ -392,7 +401,7 @@ def distributor_summary(
                     [
                         order
                         for order in completed_orders
-                        if order.created_at.date() == day
+                        if completion_dates[order.id] == day
                     ]
                 ),
             }
@@ -411,8 +420,8 @@ def distributor_summary(
                     [
                         order
                         for order in completed_orders
-                        if order.created_at.year == target_year
-                        and order.created_at.month == target_month
+                        if (order.completed_at or order.created_at).year == target_year
+                        and (order.completed_at or order.created_at).month == target_month
                     ]
                 ),
             }
