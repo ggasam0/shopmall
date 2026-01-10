@@ -37,6 +37,12 @@ IMAGE_DIR = Path(__file__).resolve().parent / "images"
 IMAGE_DIR.mkdir(exist_ok=True)
 app.mount("/images", StaticFiles(directory=str(IMAGE_DIR)), name="images")
 
+@app.middleware("http")
+async def strip_api_prefix(request, call_next):
+    if request.scope["path"].startswith("/api/"):
+        request.scope["path"] = request.scope["path"][4:]
+    return await call_next(request)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
