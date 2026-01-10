@@ -1,3 +1,5 @@
+from collections.abc import Generator
+
 from sqlalchemy import text
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -21,7 +23,17 @@ def init_db() -> None:
             connection.execute(text('ALTER TABLE "order" ADD COLUMN order_number VARCHAR'))
         if "items" not in order_columns:
             connection.execute(text('ALTER TABLE "order" ADD COLUMN items TEXT'))
+        if "completed_at" not in order_columns:
+            connection.execute(
+                text('ALTER TABLE "order" ADD COLUMN completed_at TIMESTAMP')
+            )
+            connection.execute(
+                text(
+                    'UPDATE "order" SET completed_at = created_at WHERE status = "已完成"'
+                )
+            )
 
 
-def get_session() -> Session:
-    return Session(engine)
+def get_session() -> Generator[Session, None, None]:
+    with Session(engine) as session:
+        yield session

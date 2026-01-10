@@ -31,6 +31,7 @@ class Order(SQLModel, table=True):
     total: float
     items: list[dict] = Field(default_factory=list, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: Optional[datetime] = None
 
 
 class AuthAccount(SQLModel, table=True):
