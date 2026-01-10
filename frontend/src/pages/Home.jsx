@@ -6,6 +6,7 @@ import { getStockForDistributor } from "../utils/distributor";
 import { useDistributor } from "../store/distributor";
 import { useSupplier } from "../store/supplier";
 import { buildSupplierPath } from "../utils/supplier";
+import { useCart } from "../store/cart";
 
 const categories = [
   "全部类别",
@@ -24,6 +25,7 @@ const Home = () => {
   const { products, loading } = useProducts();
   const distributor = useDistributor();
   const supplier = useSupplier();
+  const { items, addItem, updateQuantity } = useCart();
   const [keyword, setKeyword] = useState("");
   const supplierPath = (path) => buildSupplierPath(supplier, path);
 
@@ -43,6 +45,14 @@ const Home = () => {
         (product) => getStockForDistributor(product.id, distributor.code) > 0
       ),
     [filteredProducts, distributor.code]
+  );
+  const quantities = useMemo(
+    () =>
+      items.reduce((acc, item) => {
+        acc[item.id] = item.quantity;
+        return acc;
+      }, {}),
+    [items]
   );
 
   return (
@@ -105,6 +115,7 @@ const Home = () => {
         <div className="product-grid">
           {availableProducts.map((product) => {
             const stock = getStockForDistributor(product.id, distributor.code);
+            const quantity = quantities[product.id] ?? 0;
             return (
               <article key={product.id} className="product-card">
                 <img src={resolveImageUrl(product.image_url)} alt={product.name} />
@@ -112,9 +123,25 @@ const Home = () => {
                   <h4>{product.name}</h4>
                   <p>¥{product.price.toFixed(2)}</p>
                   <p className="stock">库存 {stock}</p>
-                  <Link className="action-link" to={supplierPath(`/product/${product.id}`)}>
-                    选择数量
-                  </Link>
+                  <div className="quantity">
+                    <button
+                      type="button"
+                      disabled={quantity === 0}
+                      onClick={() =>
+                        updateQuantity(product.id, Math.max(quantity - 1, 0))
+                      }
+                    >
+                      -
+                    </button>
+                    <input type="number" min="0" max={stock} readOnly value={quantity} />
+                    <button
+                      type="button"
+                      disabled={quantity >= stock}
+                      onClick={() => addItem(product, 1)}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </article>
             );

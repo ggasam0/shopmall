@@ -28,7 +28,7 @@ export const CartProvider = ({ distributorCode, children }) => {
             return item;
           }
           const stock = getStockForDistributor(item.id, distributorCode);
-          return { ...item, quantity: Math.min(Math.max(quantity, 1), stock) };
+          return { ...item, quantity: Math.min(Math.max(quantity, 0), stock) };
         })
         .filter((item) => item.quantity > 0)
     );
