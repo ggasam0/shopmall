@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiRequest } from "../api";
+import API_BASE, { apiRequest } from "../api";
 
 const categories = [
   "全部类别",
@@ -17,6 +17,15 @@ const categories = [
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const resolveImageUrl = (imageUrl) => {
+    if (!imageUrl) {
+      return "";
+    }
+    if (imageUrl.startsWith("http")) {
+      return imageUrl;
+    }
+    return `${API_BASE}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -86,7 +95,7 @@ const Home = () => {
         <div className="product-grid">
           {products.map((product) => (
             <article key={product.id} className="product-card">
-              <img src={product.image_url} alt={product.name} />
+              <img src={resolveImageUrl(product.image_url)} alt={product.name} />
               <div>
                 <h4>{product.name}</h4>
                 <p>¥{product.price.toFixed(2)}</p>
