@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import AdminDashboard from "./pages/AdminDashboard";
-import DistributorDashboard from "./pages/DistributorDashboard";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import TopNav from "./components/TopNav";
 
@@ -11,9 +10,8 @@ const App = () => {
       <TopNav />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/distributor" element={<DistributorDashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
