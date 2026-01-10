@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
+from sqlalchemy import Column, JSON
 from sqlmodel import Field, SQLModel
 
 
@@ -25,8 +26,10 @@ class Product(SQLModel, table=True):
 class Order(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
+    order_number: str
     status: str
     total: float
+    items: list[dict] = Field(default_factory=list, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

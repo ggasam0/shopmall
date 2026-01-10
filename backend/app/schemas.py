@@ -14,12 +14,28 @@ class ProductRead(BaseModel):
     is_featured: bool
 
 
+class OrderItem(BaseModel):
+    id: int
+    name: str
+    price: float
+    quantity: int
+    image_url: Optional[str] = None
+
+
 class OrderRead(BaseModel):
     id: int
     user_id: int
+    order_number: str
     status: str
     total: float
+    items: list[OrderItem]
     created_at: datetime
+
+
+class OrderCreate(BaseModel):
+    user_id: int
+    total: float
+    items: list[OrderItem]
 
 
 class DashboardSummary(BaseModel):

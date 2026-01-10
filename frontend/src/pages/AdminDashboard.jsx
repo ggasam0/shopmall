@@ -52,7 +52,7 @@ const AdminDashboard = () => {
         <div className="status-grid">
           <div>
             <strong>12</strong>
-            <span>待付款</span>
+            <span>待提货</span>
           </div>
           <div>
             <strong>6</strong>

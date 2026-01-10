@@ -15,6 +15,13 @@ def init_db() -> None:
                 text("ALTER TABLE user ADD COLUMN pickup_address VARCHAR")
             )
 
+        order_result = connection.execute(text('PRAGMA table_info("order")'))
+        order_columns = {row._mapping["name"] for row in order_result}
+        if "order_number" not in order_columns:
+            connection.execute(text('ALTER TABLE "order" ADD COLUMN order_number VARCHAR'))
+        if "items" not in order_columns:
+            connection.execute(text('ALTER TABLE "order" ADD COLUMN items TEXT'))
+
 
 def get_session() -> Session:
     return Session(engine)
