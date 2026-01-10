@@ -1,9 +1,5 @@
-const stats = [
-  { label: "今日成交额", value: "¥12,880" },
-  { label: "待处理订单", value: "8" },
-  { label: "分销商数量", value: "42" },
-  { label: "主推商品", value: "16" }
-];
+import { useEffect, useState } from "react";
+import { apiRequest } from "../api";
 
 const tasks = [
   "审核运营活动物料",
@@ -13,6 +9,55 @@ const tasks = [
 ];
 
 const AdminDashboard = () => {
+  const [summary, setSummary] = useState(null);
+  const [orderStats, setOrderStats] = useState({
+    pendingPayment: 0,
+    pendingShipment: 0,
+    pendingReceive: 0,
+    completed: 0
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    const loadSummary = async () => {
+      try {
+        const [summaryData, orders] = await Promise.all([
+          apiRequest("/admin/summary"),
+          apiRequest("/orders")
+        ]);
+        if (!mounted) {
+          return;
+        }
+        setSummary(summaryData);
+        const pendingPayment = orders.filter((order) => order.status === "待付款").length;
+        const pendingShipment = orders.filter((order) => order.status === "待发货").length;
+        const pendingReceive = orders.filter((order) => order.status === "待收货").length;
+        const completed = orders.filter((order) => order.status === "已完成").length;
+        setOrderStats({
+          pendingPayment,
+          pendingShipment,
+          pendingReceive,
+          completed
+        });
+      } catch (error) {
+        if (mounted) {
+          setSummary(null);
+        }
+      }
+    };
+    loadSummary();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const stats = [
+    { label: "今日成交额", value: summary ? `¥${summary.total_sales.toFixed(2)}` : "--" },
+    { label: "待处理订单", value: summary ? summary.pending_orders : "--" },
+    { label: "分销商数量", value: summary ? summary.active_distributors : "--" },
+    { label: "主推商品", value: summary ? summary.featured_products : "--" }
+  ];
+
   return (
     <main className="page dashboard">
       <section className="dashboard-hero admin">
@@ -51,19 +96,19 @@ const AdminDashboard = () => {
         </header>
         <div className="status-grid">
           <div>
-            <strong>12</strong>
+            <strong>{orderStats.pendingPayment}</strong>
             <span>待付款</span>
           </div>
           <div>
-            <strong>6</strong>
+            <strong>{orderStats.pendingShipment}</strong>
             <span>待发货</span>
           </div>
           <div>
-            <strong>9</strong>
+            <strong>{orderStats.pendingReceive}</strong>
             <span>待收货</span>
           </div>
           <div>
-            <strong>28</strong>
+            <strong>{orderStats.completed}</strong>
             <span>已完成</span>
           </div>
         </div>
