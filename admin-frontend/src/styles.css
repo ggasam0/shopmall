@@ -296,6 +296,12 @@ a {
   font-size: 14px;
 }
 
+.order-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
 .inventory-panel th,
 .inventory-panel td {
   border-bottom: 1px solid #eee;
@@ -303,9 +309,24 @@ a {
   text-align: left;
 }
 
+.order-table th,
+.order-table td {
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+  text-align: left;
+}
+
+.order-table td:last-child {
+  text-align: right;
+}
+
 .form-success {
   color: #2b8a3e;
   margin: 4px 0 0;
+}
+
+.muted {
+  color: #888;
 }
 
 .inventory-filter {

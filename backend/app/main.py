@@ -252,8 +252,15 @@ def list_orders(session: Session = Depends(get_session)) -> list[OrderRead]:
 def create_order(
     payload: OrderCreate, session: Session = Depends(get_session)
 ) -> OrderRead:
+    user = None
+    if payload.phone:
+        user = session.exec(select(User).where(User.phone == payload.phone)).first()
+    elif payload.user_id:
+        user = session.get(User, payload.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     order = Order(
-        user_id=payload.user_id,
+        user_id=user.id,
         order_number=_generate_order_number(),
         status="待提货",
         total=payload.total,
