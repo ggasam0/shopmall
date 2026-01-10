@@ -74,7 +74,3 @@ class ProductCreate(BaseModel):
     image_url: str
     tags: Optional[str] = None
     is_featured: Optional[bool] = False
-
-
-class ProductBulkCreate(BaseModel):
-    products: list[ProductCreate]
