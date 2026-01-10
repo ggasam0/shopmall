@@ -14,6 +14,11 @@ class ProductRead(BaseModel):
     is_featured: bool
 
 
+class InventoryItem(BaseModel):
+    product_id: int
+    stock: int
+
+
 class OrderItem(BaseModel):
     id: int
     name: str
@@ -107,3 +112,7 @@ class SupplierRead(BaseModel):
     suffix: str
     mall_name: str
     distributor: SupplierDistributor
+
+
+class InventoryUpdate(BaseModel):
+    items: list[InventoryItem]

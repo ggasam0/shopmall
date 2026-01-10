@@ -39,3 +39,10 @@ class AuthAccount(SQLModel, table=True):
     password: str
     role: str
     user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+
+
+class DistributorInventory(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    distributor_code: str = Field(index=True)
+    product_id: int = Field(foreign_key="product.id")
+    stock: int = 0
