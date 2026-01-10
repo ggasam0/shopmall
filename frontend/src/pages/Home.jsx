@@ -1,5 +1,9 @@
-import { useEffect, useState } from "react";
-import API_BASE, { apiRequest } from "../api";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import useProducts from "../hooks/useProducts";
+import { resolveImageUrl } from "../utils/products";
+import { getStockForDistributor } from "../utils/distributor";
+import { useDistributor } from "../store/distributor";
 
 const categories = [
   "全部类别",
@@ -15,48 +19,31 @@ const categories = [
 ];
 
 const Home = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const resolveImageUrl = (imageUrl) => {
-    if (!imageUrl) {
-      return "";
-    }
-    if (imageUrl.startsWith("http")) {
-      return imageUrl;
-    }
-    return `${API_BASE}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
-  };
+  const { products, loading } = useProducts();
+  const distributor = useDistributor();
+  const [keyword, setKeyword] = useState("");
 
-  useEffect(() => {
-    let mounted = true;
-    const loadProducts = async () => {
-      try {
-        const data = await apiRequest("/products");
-        if (mounted) {
-          setProducts(data);
-        }
-      } catch (error) {
-        if (mounted) {
-          setProducts([]);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-    loadProducts();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const filteredProducts = useMemo(() => {
+    const trimmed = keyword.trim();
+    if (!trimmed) {
+      return products;
+    }
+    return products.filter(
+      (product) =>
+        product.name.includes(trimmed) || product.tags?.includes(trimmed)
+    );
+  }, [products, keyword]);
 
   return (
     <main className="page home">
       <section className="hero">
         <div className="search">
           <span>🔍</span>
-          <input placeholder="商品名称 / 条码" />
+          <input
+            placeholder="商品名称 / 条码"
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+          />
         </div>
         <div className="banner">
           <div>
@@ -78,12 +65,24 @@ const Home = () => {
         <p>「有商品满200 都有赠送小礼物 欢迎新老顾客前来订货」</p>
       </section>
 
+      <section className="notice distributor-card">
+        <span>分销商</span>
+        <p>
+          当前分销商：{distributor.name}，提货地址：
+          {distributor.pickupAddress}
+        </p>
+      </section>
+
       <section className="categories">
         {categories.map((item) => (
-          <div key={item} className="category-item">
+          <Link
+            key={item}
+            className="category-item"
+            to={`/category/${encodeURIComponent(item)}`}
+          >
             <div className="icon">商</div>
             <span>{item}</span>
-          </div>
+          </Link>
         ))}
       </section>
 
@@ -93,16 +92,23 @@ const Home = () => {
           <span>查看全部</span>
         </header>
         <div className="product-grid">
-          {products.map((product) => (
-            <article key={product.id} className="product-card">
-              <img src={resolveImageUrl(product.image_url)} alt={product.name} />
-              <div>
-                <h4>{product.name}</h4>
-                <p>¥{product.price.toFixed(2)}</p>
-              </div>
-            </article>
-          ))}
-          {!loading && products.length === 0 ? (
+          {filteredProducts.map((product) => {
+            const stock = getStockForDistributor(product.id, distributor.code);
+            return (
+              <article key={product.id} className="product-card">
+                <img src={resolveImageUrl(product.image_url)} alt={product.name} />
+                <div>
+                  <h4>{product.name}</h4>
+                  <p>¥{product.price.toFixed(2)}</p>
+                  <p className="stock">库存 {stock}</p>
+                  <Link className="action-link" to={`/product/${product.id}`}>
+                    选择数量
+                  </Link>
+                </div>
+              </article>
+            );
+          })}
+          {!loading && filteredProducts.length === 0 ? (
             <p className="empty-state">暂无商品</p>
           ) : null}
         </div>
