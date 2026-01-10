@@ -4,9 +4,12 @@ import { apiRequest } from "../api";
 const DistributorDashboard = () => {
   const [summary, setSummary] = useState(null);
   const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [inventory, setInventory] = useState({});
   const [inventoryMessage, setInventoryMessage] = useState("");
   const [inventoryError, setInventoryError] = useState("");
+  const [orderMessage, setOrderMessage] = useState("");
+  const [orderError, setOrderError] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem("adminAuth");
@@ -20,13 +23,15 @@ const DistributorDashboard = () => {
     let mounted = true;
     const loadSummary = async () => {
       try {
-        const [data, productList] = await Promise.all([
+        const [data, productList, orderList] = await Promise.all([
           apiRequest(`/distributor/${auth.user_id}/summary`),
-          apiRequest("/products")
+          apiRequest("/products"),
+          apiRequest(`/users/${auth.user_id}/orders`)
         ]);
         if (mounted) {
           setSummary(data);
           setProducts(productList);
+          setOrders(orderList);
           const cacheKey = `distributorInventory:${auth.user_id}`;
           const saved = localStorage.getItem(cacheKey);
           setInventory(saved ? JSON.parse(saved) : {});
@@ -35,6 +40,7 @@ const DistributorDashboard = () => {
         if (mounted) {
           setSummary(null);
           setProducts([]);
+          setOrders([]);
         }
       }
     };
@@ -62,6 +68,21 @@ const DistributorDashboard = () => {
     localStorage.setItem(cacheKey, JSON.stringify(inventory));
     setInventoryMessage("库存已保存到本地");
     setInventoryError("");
+  };
+
+  const handleCompleteOrder = async (orderId) => {
+    setOrderMessage("");
+    setOrderError("");
+    try {
+      const updated = await apiRequest(`/orders/${orderId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "已完成" })
+      });
+      setOrders((prev) => prev.map((order) => (order.id === orderId ? updated : order)));
+      setOrderMessage("订单状态已更新为已完成");
+    } catch (error) {
+      setOrderError("更新订单状态失败");
+    }
   };
 
   return (
@@ -132,6 +153,51 @@ const DistributorDashboard = () => {
             <span>上次下单：1周前</span>
           </div>
         </div>
+      </section>
+
+      <section className="dashboard-panel">
+        <header>
+          <h3>订单管理</h3>
+          <span>待提货可标记为已完成</span>
+        </header>
+        {orders.length ? (
+          <table className="order-table">
+            <thead>
+              <tr>
+                <th>订单号</th>
+                <th>状态</th>
+                <th>总计</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id}>
+                  <td>{order.order_number}</td>
+                  <td>{order.status}</td>
+                  <td>¥{order.total.toFixed(2)}</td>
+                  <td>
+                    {order.status === "待提货" ? (
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => handleCompleteOrder(order.id)}
+                      >
+                        标记已完成
+                      </button>
+                    ) : (
+                      <span className="muted">-</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="empty-state">暂无订单数据。</p>
+        )}
+        {orderError ? <p className="form-error">{orderError}</p> : null}
+        {orderMessage ? <p className="form-success">{orderMessage}</p> : null}
       </section>
 
       <section className="dashboard-panel">

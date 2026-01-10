@@ -6,8 +6,6 @@ import { buildSupplierPath } from "../utils/supplier";
 
 const defaultStatus = [
   { label: "待提货", icon: "🧾" },
-  { label: "待发货", icon: "🚚", badge: 0 },
-  { label: "待收货", icon: "📦" },
   { label: "已完成", icon: "✅" }
 ];
 
@@ -49,13 +47,9 @@ const Profile = () => {
 
   const orderStatus = useMemo(() => {
     const pendingPickup = orders.filter((order) => order.status === "待提货").length;
-    const pendingShipment = orders.filter((order) => order.status === "待发货").length;
-    const pendingReceive = orders.filter((order) => order.status === "待收货").length;
     const completed = orders.filter((order) => order.status === "已完成").length;
     return [
       { label: "待提货", icon: "🧾", badge: pendingPickup },
-      { label: "待发货", icon: "🚚", badge: pendingShipment },
-      { label: "待收货", icon: "📦", badge: pendingReceive },
       { label: "已完成", icon: "✅", badge: completed }
     ];
   }, [orders]);
@@ -69,21 +63,6 @@ const Profile = () => {
             请先 <Link to={supplierPath("/login")}>登录</Link>
           </p>
         ) : null}
-      </section>
-
-      <section className="stats">
-        <div>
-          <strong>¥0.00</strong>
-          <span>余额·充值</span>
-        </div>
-        <div>
-          <strong>0</strong>
-          <span>优惠券</span>
-        </div>
-        <div>
-          <strong>0</strong>
-          <span>积分</span>
-        </div>
       </section>
 
       <section className="orders">
@@ -128,33 +107,30 @@ const Profile = () => {
                   </div>
                   <span className="status-tag">{order.status}</span>
                 </div>
-                <ul>
+                <ul className="order-items-table">
+                  <li className="order-items-row order-items-header">
+                    <span>商品</span>
+                    <span>数量</span>
+                    <span>单价</span>
+                    <span>小计</span>
+                  </li>
                   {(order.items || []).map((item) => (
-                    <li key={`${order.id}-${item.id}`}>
+                    <li key={`${order.id}-${item.id}`} className="order-items-row">
                       <span>{item.name}</span>
-                      <span>× {item.quantity}</span>
+                      <span>{item.quantity}</span>
+                      <span>¥{item.price.toFixed(2)}</span>
+                      <span>¥{(item.price * item.quantity).toFixed(2)}</span>
                     </li>
                   ))}
                 </ul>
                 <div className="order-total">
-                  <span>合计</span>
+                  <span>总计</span>
                   <strong>¥{order.total.toFixed(2)}</strong>
                 </div>
               </article>
             ))}
           </div>
         )}
-      </section>
-
-      <section className="profile-links">
-        <button type="button">
-          <span>📱 手机号</span>
-          <span>›</span>
-        </button>
-        <button type="button">
-          <span>📍 收货地址管理</span>
-          <span>›</span>
-        </button>
       </section>
       <footer className="footer-tip">智慧记提供技术支持</footer>
     </main>

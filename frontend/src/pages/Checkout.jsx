@@ -47,6 +47,7 @@ const Checkout = () => {
         method: "POST",
         body: JSON.stringify({
           user_id: user.id,
+          phone: user.phone,
           total,
           items: orderItems
         })

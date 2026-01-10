@@ -33,7 +33,8 @@ class OrderRead(BaseModel):
 
 
 class OrderCreate(BaseModel):
-    user_id: int
+    user_id: Optional[int] = None
+    phone: Optional[str] = None
     total: float
     items: list[OrderItem]
 
