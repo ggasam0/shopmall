@@ -1,0 +1,28 @@
+from datetime import datetime
+from typing import Optional
+
+from sqlmodel import Field, SQLModel
+
+
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    phone: str
+    role: str
+
+
+class Product(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    category: str
+    price: float
+    image_url: str
+    is_featured: bool = False
+
+
+class Order(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    status: str
+    total: float
+    created_at: datetime = Field(default_factory=datetime.utcnow)
