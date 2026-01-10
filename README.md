@@ -19,8 +19,8 @@ npm run dev
 
 ```bash
 cd backend
-python -m venv .venv
+uv  venv .venv --python 3.11
 source .venv/bin/activate
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
