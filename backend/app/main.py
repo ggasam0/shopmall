@@ -163,22 +163,6 @@ def on_startup() -> None:
                 session.add(Product(**payload))
             session.commit()
 
-        if not session.exec(select(Order)).first():
-            distributor_user = session.exec(
-                select(User).where(User.role == "distributor")
-            ).first()
-            if distributor_user:
-                session.add(
-                    Order(
-                        user_id=distributor_user.id,
-                        order_number=_generate_order_number(),
-                        status="待提货",
-                        total=298.0,
-                        items=[],
-                    )
-                )
-                session.commit()
-
         orders_missing_number = session.exec(
             select(Order).where(Order.order_number.is_(None))
         ).all()
@@ -376,7 +360,7 @@ def distributor_summary(
     account = session.exec(
         select(AuthAccount).where(AuthAccount.user_id == user_id)
     ).first()
-    orders = session.exec(select(Order).where(Order.user_id == user_id)).all()
+    orders = session.exec(select(Order)).all()
     total_orders = len(orders)
     commission = sum(order.total for order in orders) * 0.15
     completed_orders = [order for order in orders if order.status == "已完成"]
