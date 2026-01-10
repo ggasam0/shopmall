@@ -10,6 +10,7 @@ class ProductRead(BaseModel):
     category: str
     price: float
     image_url: str
+    tags: Optional[str] = None
     is_featured: bool
 
 
@@ -31,6 +32,7 @@ class DashboardSummary(BaseModel):
 class DistributorSummary(BaseModel):
     distributor_id: int
     name: str
+    pickup_address: Optional[str] = None
     total_orders: int
     commission: float
     wallet_balance: float
@@ -43,6 +45,7 @@ class UserRead(BaseModel):
     name: str
     phone: str
     role: str
+    pickup_address: Optional[str] = None
 
 
 class AuthLoginRequest(BaseModel):
@@ -69,4 +72,9 @@ class ProductCreate(BaseModel):
     category: str
     price: float
     image_url: str
+    tags: Optional[str] = None
     is_featured: Optional[bool] = False
+
+
+class ProductBulkCreate(BaseModel):
+    products: list[ProductCreate]

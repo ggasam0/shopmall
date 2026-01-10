@@ -1,6 +1,15 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const TopNav = () => {
+  const navigate = useNavigate();
+  const stored = localStorage.getItem("adminAuth");
+  const auth = stored ? JSON.parse(stored) : null;
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminAuth");
+    navigate("/login");
+  };
+
   return (
     <header className="top-nav">
       <div className="brand">
@@ -13,6 +22,11 @@ const TopNav = () => {
       <nav>
         <NavLink to="/admin">管理员</NavLink>
         <NavLink to="/distributor">分销商</NavLink>
+        {auth ? (
+          <button type="button" className="ghost-button" onClick={handleLogout}>
+            退出登录
+          </button>
+        ) : null}
       </nav>
     </header>
   );
