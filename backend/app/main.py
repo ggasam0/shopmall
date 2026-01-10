@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 
+from app.config import AUTH_CONFIG
 from app.db import get_session, init_db
 from app.models import AuthAccount, Order, Product, User
 from app.schemas import (
@@ -12,6 +13,7 @@ from app.schemas import (
     OrderRead,
     OrderStatusUpdate,
     PhoneLoginRequest,
+    ProductBulkCreate,
     ProductCreate,
     ProductRead,
     UserRead,
@@ -32,59 +34,37 @@ app.add_middleware(
 def on_startup() -> None:
     init_db()
     with get_session() as session:
-        admin_user = session.exec(
-            select(User).where(User.phone == "13763316649")
-        ).first()
-        if not admin_user:
-            admin_user = User(name="平台管理员", phone="13763316649", role="admin")
-            session.add(admin_user)
-            session.commit()
-            session.refresh(admin_user)
-
-        distributor_a = session.exec(
-            select(User).where(User.phone == "13800001111")
-        ).first()
-        if not distributor_a:
-            distributor_a = User(name="渠道分销A", phone="13800001111", role="distributor")
-            session.add(distributor_a)
-            session.commit()
-            session.refresh(distributor_a)
-
-        distributor_b = session.exec(
-            select(User).where(User.phone == "13800002222")
-        ).first()
-        if not distributor_b:
-            distributor_b = User(name="渠道分销B", phone="13800002222", role="distributor")
-            session.add(distributor_b)
-            session.commit()
-            session.refresh(distributor_b)
-
-        if not session.exec(select(AuthAccount)).first():
-            session.add(
-                AuthAccount(
-                    username="admin",
-                    password="admin123",
-                    role="admin",
-                    user_id=admin_user.id,
+        for account in AUTH_CONFIG:
+            user_payload = account["user"]
+            user = session.exec(select(User).where(User.phone == user_payload["phone"])).first()
+            if not user:
+                user = User(
+                    name=user_payload["name"],
+                    phone=user_payload["phone"],
+                    role=account["role"],
+                    pickup_address=user_payload.get("pickup_address"),
                 )
-            )
-            session.add(
-                AuthAccount(
-                    username="dist_a",
-                    password="dist123",
-                    role="distributor",
-                    user_id=distributor_a.id,
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+            else:
+                user.pickup_address = user_payload.get("pickup_address")
+                session.add(user)
+                session.commit()
+
+            existing_account = session.exec(
+                select(AuthAccount).where(AuthAccount.username == account["username"])
+            ).first()
+            if not existing_account:
+                session.add(
+                    AuthAccount(
+                        username=account["username"],
+                        password=account["password"],
+                        role=account["role"],
+                        user_id=user.id,
+                    )
                 )
-            )
-            session.add(
-                AuthAccount(
-                    username="dist_b",
-                    password="dist456",
-                    role="distributor",
-                    user_id=distributor_b.id,
-                )
-            )
-            session.commit()
+                session.commit()
 
         if not session.exec(select(Product)).first():
             session.add(
@@ -93,6 +73,7 @@ def on_startup() -> None:
                     category="夜景礼花",
                     price=298.0,
                     image_url="https://images.unsplash.com/photo-1509228468518-180dd4864904",
+                    tags="夜景,礼花,套装",
                     is_featured=True,
                 )
             )
@@ -102,19 +83,24 @@ def on_startup() -> None:
                     category="纸炮",
                     price=88.0,
                     image_url="https://images.unsplash.com/photo-1509228468518-180dd4864904",
+                    tags="节庆,鞭炮",
                 )
             )
             session.commit()
 
         if not session.exec(select(Order)).first():
-            session.add(
-                Order(
-                    user_id=distributor_a.id,
-                    status="待发货",
-                    total=298.0,
+            distributor_user = session.exec(
+                select(User).where(User.role == "distributor")
+            ).first()
+            if distributor_user:
+                session.add(
+                    Order(
+                        user_id=distributor_user.id,
+                        status="待发货",
+                        total=298.0,
+                    )
                 )
-            )
-            session.commit()
+                session.commit()
 
 
 @app.post("/auth/login", response_model=AuthLoginResponse)
@@ -165,6 +151,18 @@ def create_product(
     session.commit()
     session.refresh(product)
     return product
+
+
+@app.post("/products/bulk", response_model=list[ProductRead])
+def create_products_bulk(
+    payload: ProductBulkCreate, session: Session = Depends(get_session)
+) -> list[ProductRead]:
+    products = [Product(**item.model_dump()) for item in payload.products]
+    session.add_all(products)
+    session.commit()
+    for product in products:
+        session.refresh(product)
+    return products
 
 
 @app.get("/orders", response_model=list[OrderRead])
@@ -228,6 +226,7 @@ def distributor_summary(
     return DistributorSummary(
         distributor_id=user.id,
         name=user.name,
+        pickup_address=user.pickup_address,
         total_orders=total_orders,
         commission=commission,
         wallet_balance=1200.0,

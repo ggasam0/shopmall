@@ -9,6 +9,7 @@ class User(SQLModel, table=True):
     name: str
     phone: str
     role: str
+    pickup_address: Optional[str] = None
 
 
 class Product(SQLModel, table=True):
@@ -17,6 +18,7 @@ class Product(SQLModel, table=True):
     category: str
     price: float
     image_url: str
+    tags: Optional[str] = None
     is_featured: bool = False
 
 

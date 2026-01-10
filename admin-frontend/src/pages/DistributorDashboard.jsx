@@ -3,6 +3,10 @@ import { apiRequest } from "../api";
 
 const DistributorDashboard = () => {
   const [summary, setSummary] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [inventory, setInventory] = useState({});
+  const [inventoryMessage, setInventoryMessage] = useState("");
+  const [inventoryError, setInventoryError] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem("adminAuth");
@@ -16,13 +20,21 @@ const DistributorDashboard = () => {
     let mounted = true;
     const loadSummary = async () => {
       try {
-        const data = await apiRequest(`/distributor/${auth.user_id}/summary`);
+        const [data, productList] = await Promise.all([
+          apiRequest(`/distributor/${auth.user_id}/summary`),
+          apiRequest("/products")
+        ]);
         if (mounted) {
           setSummary(data);
+          setProducts(productList);
+          const cacheKey = `distributorInventory:${auth.user_id}`;
+          const saved = localStorage.getItem(cacheKey);
+          setInventory(saved ? JSON.parse(saved) : {});
         }
       } catch (error) {
         if (mounted) {
           setSummary(null);
+          setProducts([]);
         }
       }
     };
@@ -32,12 +44,35 @@ const DistributorDashboard = () => {
     };
   }, []);
 
+  const handleInventoryChange = (productId, value) => {
+    setInventory((prev) => ({
+      ...prev,
+      [productId]: Number(value)
+    }));
+    setInventoryMessage("");
+    setInventoryError("");
+  };
+
+  const handleSaveInventory = () => {
+    if (!summary?.distributor_id) {
+      setInventoryError("无法获取分销商信息");
+      return;
+    }
+    const cacheKey = `distributorInventory:${summary.distributor_id}`;
+    localStorage.setItem(cacheKey, JSON.stringify(inventory));
+    setInventoryMessage("库存已保存到本地");
+    setInventoryError("");
+  };
+
   return (
     <main className="page dashboard">
       <section className="dashboard-hero distributor">
         <div>
           <h2>{summary ? `${summary.name}管理后台` : "分销商管理后台"}</h2>
           <p>掌握佣金、订单与客户运营数据</p>
+          {summary?.pickup_address ? (
+            <p className="subtle">提货地址：{summary.pickup_address}</p>
+          ) : null}
         </div>
         <button type="button">提现申请</button>
       </section>
@@ -95,6 +130,51 @@ const DistributorDashboard = () => {
           <div>
             <strong>岳阳城庆典</strong>
             <span>上次下单：1周前</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="dashboard-panel">
+        <header>
+          <h3>我的库存维护</h3>
+          <span>仅影响分销商自有库存</span>
+        </header>
+        <div className="inventory-panel">
+          {products.length ? (
+            <table>
+              <thead>
+                <tr>
+                  <th>商品名称</th>
+                  <th>类别</th>
+                  <th>当前库存</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product) => (
+                  <tr key={product.id}>
+                    <td>{product.name}</td>
+                    <td>{product.category}</td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        value={inventory[product.id] ?? 0}
+                        onChange={(event) => handleInventoryChange(product.id, event.target.value)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="empty-state">暂无商品数据，无法维护库存。</p>
+          )}
+          <div className="inventory-actions">
+            <button type="button" onClick={handleSaveInventory}>
+              保存库存
+            </button>
+            {inventoryError ? <p className="form-error">{inventoryError}</p> : null}
+            {inventoryMessage ? <p className="form-success">{inventoryMessage}</p> : null}
           </div>
         </div>
       </section>

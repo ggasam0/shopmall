@@ -66,6 +66,7 @@ a {
   display: flex;
   gap: 16px;
   font-size: 14px;
+  align-items: center;
 }
 
 .top-nav nav a {
@@ -75,6 +76,21 @@ a {
 }
 
 .top-nav nav a.active {
+  background: #ff584d;
+  color: #fff;
+}
+
+.ghost-button {
+  border: 1px solid #ff584d;
+  background: transparent;
+  color: #ff584d;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ghost-button:hover {
   background: #ff584d;
   color: #fff;
 }
@@ -90,6 +106,12 @@ a {
 .page.login {
   display: flex;
   justify-content: center;
+}
+
+.subtle {
+  color: #e8f0ff;
+  font-size: 13px;
+  margin-top: 6px;
 }
 
 .hero {
@@ -256,6 +278,86 @@ a {
   margin: 0 12px 12px;
   color: #ff5d5d;
   font-weight: 600;
+}
+
+.upload-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.upload-area input[type="file"] {
+  border: 1px dashed #d6d6d6;
+  padding: 10px;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.upload-area button,
+.inventory-actions button {
+  border: none;
+  background: #ff5d5d;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.upload-area button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.upload-preview {
+  margin-top: 16px;
+  background: #fafafa;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.upload-preview table,
+.inventory-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.upload-preview th,
+.upload-preview td,
+.inventory-panel th,
+.inventory-panel td {
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+  text-align: left;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #666;
+}
+
+.form-success {
+  color: #2b8a3e;
+  margin: 4px 0 0;
+}
+
+.inventory-panel input[type="number"] {
+  width: 90px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.inventory-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .profile-card {
