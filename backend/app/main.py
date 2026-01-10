@@ -9,15 +9,18 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
+from sqlalchemy import delete
 
 from app.config import AUTH_CONFIG, SUPPLIER_CONFIG
 from app.db import get_session, init_db
-from app.models import AuthAccount, Order, Product, User
+from app.models import AuthAccount, DistributorInventory, Order, Product, User
 from app.schemas import (
     AuthLoginRequest,
     AuthLoginResponse,
     DashboardSummary,
     DistributorSummary,
+    InventoryItem,
+    InventoryUpdate,
     OrderCreate,
     OrderRead,
     OrderStatusUpdate,
@@ -240,6 +243,44 @@ def create_product(
 @app.get("/suppliers", response_model=list[SupplierRead])
 def list_suppliers() -> list[SupplierRead]:
     return SUPPLIER_CONFIG
+
+
+@app.get("/inventory/{distributor_code}", response_model=list[InventoryItem])
+def list_inventory(
+    distributor_code: str, session: Session = Depends(get_session)
+) -> list[InventoryItem]:
+    records = session.exec(
+        select(DistributorInventory).where(
+            DistributorInventory.distributor_code == distributor_code
+        )
+    ).all()
+    return [
+        InventoryItem(product_id=record.product_id, stock=record.stock)
+        for record in records
+    ]
+
+
+@app.put("/inventory/{distributor_code}", response_model=list[InventoryItem])
+def update_inventory(
+    distributor_code: str,
+    payload: InventoryUpdate,
+    session: Session = Depends(get_session),
+) -> list[InventoryItem]:
+    session.exec(
+        delete(DistributorInventory).where(
+            DistributorInventory.distributor_code == distributor_code
+        )
+    )
+    for item in payload.items:
+        session.add(
+            DistributorInventory(
+                distributor_code=distributor_code,
+                product_id=item.product_id,
+                stock=item.stock,
+            )
+        )
+    session.commit()
+    return payload.items
 
 
 

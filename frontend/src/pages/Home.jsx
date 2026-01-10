@@ -66,19 +66,6 @@ const Home = () => {
             onChange={(event) => setKeyword(event.target.value)}
           />
         </div>
-        <div className="banner">
-          <div>
-            <h2>热销爆品</h2>
-            <p>优惠多多</p>
-          </div>
-          <button type="button">立即选购</button>
-        </div>
-        <div className="dots">
-          <span className="dot active" />
-          <span className="dot" />
-          <span className="dot" />
-          <span className="dot" />
-        </div>
       </section>
 
       <section className="notice">

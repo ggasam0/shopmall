@@ -19,6 +19,7 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [distributors, setDistributors] = useState([]);
   const [selectedDistributorId, setSelectedDistributorId] = useState("");
+  const [selectedDistributorCode, setSelectedDistributorCode] = useState("");
   const [inventory, setInventory] = useState({});
   const [inventoryMessage, setInventoryMessage] = useState("");
   const [inventoryError, setInventoryError] = useState("");
@@ -91,13 +92,47 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (!selectedDistributorId) {
       setInventory({});
+      setSelectedDistributorCode("");
       return;
     }
-    const cacheKey = `distributorInventory:${selectedDistributorId}`;
-    const saved = localStorage.getItem(cacheKey);
-    setInventory(saved ? JSON.parse(saved) : {});
-    setInventoryMessage("");
-    setInventoryError("");
+    let mounted = true;
+    const loadInventory = async () => {
+      try {
+        const summaryData = await apiRequest(
+          `/distributor/${selectedDistributorId}/summary`
+        );
+        if (!mounted) {
+          return;
+        }
+        const distributorCode = summaryData?.code || "";
+        setSelectedDistributorCode(distributorCode);
+        if (!distributorCode) {
+          setInventory({});
+          setInventoryError("无法获取分销商编码");
+          return;
+        }
+        const inventoryList = await apiRequest(`/inventory/${distributorCode}`);
+        if (!mounted) {
+          return;
+        }
+        const nextInventory = inventoryList.reduce((acc, item) => {
+          acc[item.product_id] = item.stock;
+          return acc;
+        }, {});
+        setInventory(nextInventory);
+        setInventoryMessage("");
+        setInventoryError("");
+      } catch (error) {
+        if (mounted) {
+          setInventory({});
+          setInventoryError("库存加载失败，请稍后重试");
+        }
+      }
+    };
+    loadInventory();
+    return () => {
+      mounted = false;
+    };
   }, [selectedDistributorId]);
 
   const handleInventoryChange = (productId, value) => {
@@ -114,10 +149,26 @@ const AdminDashboard = () => {
       setInventoryError("请先选择分销商");
       return;
     }
-    const cacheKey = `distributorInventory:${selectedDistributorId}`;
-    localStorage.setItem(cacheKey, JSON.stringify(inventory));
-    setInventoryMessage("库存已保存");
-    setInventoryError("");
+    if (!selectedDistributorCode) {
+      setInventoryError("无法获取分销商编码");
+      return;
+    }
+    const items = Object.entries(inventory).map(([productId, stock]) => ({
+      product_id: Number(productId),
+      stock: Number(stock)
+    }));
+    apiRequest(`/inventory/${selectedDistributorCode}`, {
+      method: "PUT",
+      body: JSON.stringify({ items })
+    })
+      .then(() => {
+        setInventoryMessage("库存已保存到数据库");
+        setInventoryError("");
+      })
+      .catch(() => {
+        setInventoryError("库存保存失败，请稍后重试");
+        setInventoryMessage("");
+      });
   };
 
   const stats = [

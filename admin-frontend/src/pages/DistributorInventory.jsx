@@ -28,12 +28,16 @@ const DistributorInventory = () => {
         if (mounted) {
           setSummary(summaryData);
           setProducts(productList);
-          const codeKey = summaryData?.code
-            ? `distributorInventory:${summaryData.code}`
-            : null;
-          const legacyKey = `distributorInventory:${auth.user_id}`;
-          const saved = (codeKey && localStorage.getItem(codeKey)) || localStorage.getItem(legacyKey);
-          setInventory(saved ? JSON.parse(saved) : {});
+          if (summaryData?.code) {
+            const inventoryList = await apiRequest(`/inventory/${summaryData.code}`);
+            const nextInventory = inventoryList.reduce((acc, item) => {
+              acc[item.product_id] = item.stock;
+              return acc;
+            }, {});
+            setInventory(nextInventory);
+          } else {
+            setInventory({});
+          }
         }
       } catch (error) {
         if (mounted) {
@@ -62,14 +66,26 @@ const DistributorInventory = () => {
       setInventoryError("无法获取分销商信息");
       return;
     }
-    const legacyKey = `distributorInventory:${summary.distributor_id}`;
-    const codeKey = summary.code ? `distributorInventory:${summary.code}` : null;
-    localStorage.setItem(legacyKey, JSON.stringify(inventory));
-    if (codeKey) {
-      localStorage.setItem(codeKey, JSON.stringify(inventory));
+    if (!summary?.code) {
+      setInventoryError("无法获取分销商编码");
+      return;
     }
-    setInventoryMessage("库存已保存到本地");
-    setInventoryError("");
+    const items = Object.entries(inventory).map(([productId, stock]) => ({
+      product_id: Number(productId),
+      stock: Number(stock)
+    }));
+    apiRequest(`/inventory/${summary.code}`, {
+      method: "PUT",
+      body: JSON.stringify({ items })
+    })
+      .then(() => {
+        setInventoryMessage("库存已保存到数据库");
+        setInventoryError("");
+      })
+      .catch(() => {
+        setInventoryError("库存保存失败，请稍后重试");
+        setInventoryMessage("");
+      });
   };
 
   return (

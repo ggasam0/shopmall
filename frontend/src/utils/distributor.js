@@ -1,4 +1,5 @@
 import distributorMap, { defaultDistributor } from "../data/distributors";
+import { apiRequest } from "../api";
 
 const normalizeCode = (value) => value?.trim().toLowerCase();
 
@@ -32,21 +33,56 @@ export const getDistributorByLocation = (location) => {
   return getDistributor(code);
 };
 
+const inventoryCache = new Map();
+
+const buildInventoryCacheKey = (code) => `distributorInventory:${code}`;
+
+const readInventoryFromStorage = (code) => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const saved = window.localStorage.getItem(buildInventoryCacheKey(code));
+  if (!saved) {
+    return null;
+  }
+  try {
+    return JSON.parse(saved);
+  } catch (error) {
+    return null;
+  }
+};
+
+export const preloadDistributorInventory = async (distributorCode) => {
+  const normalized = normalizeCode(distributorCode || defaultDistributor.code) || "";
+  if (!normalized || typeof window === "undefined") {
+    return {};
+  }
+  try {
+    const inventoryList = await apiRequest(`/inventory/${normalized}`);
+    const nextInventory = inventoryList.reduce((acc, item) => {
+      acc[item.product_id] = item.stock;
+      return acc;
+    }, {});
+    window.localStorage.setItem(
+      buildInventoryCacheKey(normalized),
+      JSON.stringify(nextInventory)
+    );
+    inventoryCache.set(normalized, nextInventory);
+    return nextInventory;
+  } catch (error) {
+    const fallback = readInventoryFromStorage(normalized) || {};
+    inventoryCache.set(normalized, fallback);
+    return fallback;
+  }
+};
+
 export const getStockForDistributor = (productId, distributorCode) => {
   const normalized = normalizeCode(distributorCode || defaultDistributor.code) || "";
   if (typeof window === "undefined") {
     return 0;
   }
-  const cacheKey = `distributorInventory:${normalized}`;
-  const saved = window.localStorage.getItem(cacheKey);
-  if (!saved) {
-    return 0;
-  }
-  try {
-    const inventory = JSON.parse(saved);
-    const stock = Number(inventory?.[productId] ?? 0);
-    return Number.isFinite(stock) ? stock : 0;
-  } catch (error) {
-    return 0;
-  }
+  const cached =
+    inventoryCache.get(normalized) || readInventoryFromStorage(normalized) || {};
+  const stock = Number(cached?.[productId] ?? 0);
+  return Number.isFinite(stock) ? stock : 0;
 };

@@ -1,6 +1,6 @@
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { getDistributorByLocation } from "../utils/distributor";
+import { getDistributorByLocation, preloadDistributorInventory } from "../utils/distributor";
 import { useSupplier } from "./supplier";
 import { defaultDistributor } from "../data/distributors";
 
@@ -22,6 +22,10 @@ export const DistributorProvider = ({ children }) => {
     }
     return getDistributorByLocation(location);
   }, [location, supplier]);
+
+  useEffect(() => {
+    preloadDistributorInventory(distributor.code);
+  }, [distributor.code]);
 
   return (
     <DistributorContext.Provider value={distributor}>
