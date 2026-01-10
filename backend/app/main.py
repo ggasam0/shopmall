@@ -406,7 +406,7 @@ def distributor_summary(
             target_year -= 1
         monthly_completed_order_series.append(
             {
-                "label": f\"{target_year}-{target_month:02d}\",
+                "label": f"{target_year}-{target_month:02d}",
                 "count": len(
                     [
                         order
