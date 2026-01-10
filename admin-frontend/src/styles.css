@@ -87,6 +87,11 @@ a {
   margin: 0 auto;
 }
 
+.page.login {
+  display: flex;
+  justify-content: center;
+}
+
 .hero {
   background: linear-gradient(135deg, #ff5d5d, #ff8a5b);
   border-radius: 24px;
@@ -471,6 +476,67 @@ a {
   background: #f7f7f7;
   display: flex;
   flex-direction: column;
+  gap: 4px;
+}
+
+.login-card {
+  background: #fff;
+  padding: 24px;
+  border-radius: 22px;
+  box-shadow: 0 18px 30px rgba(255, 93, 93, 0.12);
+  display: grid;
+  gap: 18px;
+  max-width: 420px;
+}
+
+.login-card h2 {
+  margin-bottom: 6px;
+}
+
+.login-card p {
+  color: #666;
+  margin: 0;
+}
+
+.login-form {
+  display: grid;
+  gap: 16px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.login-form input {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #eee;
+  font-size: 14px;
+}
+
+.form-error {
+  margin: 0;
+  color: #d14343;
+  font-size: 13px;
+}
+
+.primary-button {
+  border: none;
+  background: linear-gradient(135deg, #ff5d5d, #ff8b6f);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.login-hint {
+  color: #777;
+  font-size: 12px;
+  display: grid;
   gap: 4px;
 }
 

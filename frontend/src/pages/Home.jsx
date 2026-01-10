@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { apiRequest } from "../api";
+
 const categories = [
   "全部类别",
   "其他类别",
@@ -11,38 +14,34 @@ const categories = [
   "摔炮"
 ];
 
-const hotProducts = [
-  {
-    id: 1,
-    name: "夜景礼花套装",
-    price: "¥298",
-    image:
-      "https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 2,
-    name: "手持仙女棒",
-    price: "¥29",
-    image:
-      "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 3,
-    name: "星空喷泉",
-    price: "¥69",
-    image:
-      "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 4,
-    name: "开业礼炮",
-    price: "¥128",
-    image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=400&auto=format&fit=crop"
-  }
-];
-
 const Home = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadProducts = async () => {
+      try {
+        const data = await apiRequest("/products");
+        if (mounted) {
+          setProducts(data);
+        }
+      } catch (error) {
+        if (mounted) {
+          setProducts([]);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    loadProducts();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <main className="page home">
       <section className="hero">
@@ -85,15 +84,18 @@ const Home = () => {
           <span>查看全部</span>
         </header>
         <div className="product-grid">
-          {hotProducts.map((product) => (
+          {products.map((product) => (
             <article key={product.id} className="product-card">
-              <img src={product.image} alt={product.name} />
+              <img src={product.image_url} alt={product.name} />
               <div>
                 <h4>{product.name}</h4>
-                <p>{product.price}</p>
+                <p>¥{product.price.toFixed(2)}</p>
               </div>
             </article>
           ))}
+          {!loading && products.length === 0 ? (
+            <p className="empty-state">暂无商品</p>
+          ) : null}
         </div>
       </section>
     </main>
