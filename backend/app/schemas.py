@@ -30,6 +30,7 @@ class OrderItem(BaseModel):
 class OrderRead(BaseModel):
     id: int
     user_id: int
+    distributor_code: Optional[str] = None
     order_number: str
     status: str
     total: float
@@ -40,6 +41,7 @@ class OrderRead(BaseModel):
 class OrderCreate(BaseModel):
     user_id: Optional[int] = None
     phone: Optional[str] = None
+    distributor_code: Optional[str] = None
     total: float
     items: list[OrderItem]
 

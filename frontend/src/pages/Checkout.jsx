@@ -48,6 +48,7 @@ const Checkout = () => {
         body: JSON.stringify({
           user_id: user.id,
           phone: user.phone,
+          distributor_code: distributor.code,
           total,
           items: orderItems
         })

@@ -12,11 +12,19 @@ const DistributorOrders = () => {
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   useEffect(() => {
+    const stored = localStorage.getItem("adminAuth");
+    if (!stored) {
+      return;
+    }
+    const auth = JSON.parse(stored);
+    if (!auth?.user_id) {
+      return;
+    }
     let mounted = true;
     const loadOrders = async () => {
       try {
         const [orderList, userList] = await Promise.all([
-          apiRequest("/orders"),
+          apiRequest(`/distributor/${auth.user_id}/orders`),
           apiRequest("/users")
         ]);
         if (mounted) {

@@ -26,6 +26,7 @@ class Product(SQLModel, table=True):
 class Order(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
+    distributor_code: Optional[str] = Field(default=None, index=True)
     order_number: str
     status: str
     total: float

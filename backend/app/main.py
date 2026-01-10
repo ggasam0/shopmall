@@ -292,6 +292,7 @@ def create_order(
         raise HTTPException(status_code=404, detail="User not found")
     order = Order(
         user_id=user.id,
+        distributor_code=payload.distributor_code,
         order_number=_generate_order_number(),
         status="待提货",
         total=payload.total,
@@ -360,7 +361,14 @@ def distributor_summary(
     account = session.exec(
         select(AuthAccount).where(AuthAccount.user_id == user_id)
     ).first()
-    orders = session.exec(select(Order)).all()
+    distributor_code = account.username if account else None
+    orders = (
+        session.exec(
+            select(Order).where(Order.distributor_code == distributor_code)
+        ).all()
+        if distributor_code
+        else []
+    )
     total_orders = len(orders)
     commission = sum(order.total for order in orders) * 0.15
     completed_orders = [order for order in orders if order.status == "已完成"]
@@ -418,7 +426,7 @@ def distributor_summary(
         )
     return DistributorSummary(
         distributor_id=user.id,
-        code=account.username if account else None,
+        code=distributor_code,
         name=user.name,
         pickup_address=user.pickup_address,
         total_orders=total_orders,
@@ -431,3 +439,20 @@ def distributor_summary(
         coupons=3,
         points=180,
     )
+
+
+@app.get("/distributor/{user_id}/orders", response_model=list[OrderRead])
+def list_distributor_orders(
+    user_id: int, session: Session = Depends(get_session)
+) -> list[OrderRead]:
+    user = session.get(User, user_id)
+    if not user or user.role != "distributor":
+        raise HTTPException(status_code=404, detail="Distributor not found")
+    account = session.exec(
+        select(AuthAccount).where(AuthAccount.user_id == user_id)
+    ).first()
+    if not account:
+        return []
+    return session.exec(
+        select(Order).where(Order.distributor_code == account.username)
+    ).all()
