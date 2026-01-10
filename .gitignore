@@ -4,3 +4,5 @@ backend/app/__pycache__/
 backend/*.db
 package-lock.json
 admin-frontend/node_modules/
+~$*
+desktop.ini
