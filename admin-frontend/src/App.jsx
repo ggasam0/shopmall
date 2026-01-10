@@ -1,6 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import AdminDashboard from "./pages/AdminDashboard";
 import DistributorDashboard from "./pages/DistributorDashboard";
+import DistributorCustomers from "./pages/DistributorCustomers";
+import DistributorInventory from "./pages/DistributorInventory";
+import DistributorOrders from "./pages/DistributorOrders";
 import Login from "./pages/Login";
 import TopNav from "./components/TopNav";
 
@@ -39,6 +42,30 @@ const App = () => {
           element={
             <RequireAuth allow="distributor">
               <DistributorDashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/distributor/orders"
+          element={
+            <RequireAuth allow="distributor">
+              <DistributorOrders />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/distributor/customers"
+          element={
+            <RequireAuth allow="distributor">
+              <DistributorCustomers />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/distributor/inventory"
+          element={
+            <RequireAuth allow="distributor">
+              <DistributorInventory />
             </RequireAuth>
           }
         />

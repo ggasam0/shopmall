@@ -23,6 +23,7 @@ a {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-bottom: 84px;
 }
 
 .top-nav {
@@ -62,19 +63,28 @@ a {
   font-size: 12px;
 }
 
-.top-nav nav {
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
-  gap: 16px;
+  justify-content: space-around;
+  gap: 12px;
+  padding: 12px 18px calc(env(safe-area-inset-bottom) + 12px);
+  background: #ffffff;
+  border-top: 1px solid #f0f0f0;
   font-size: 14px;
+  z-index: 6;
 }
 
-.top-nav nav a {
+.bottom-nav a {
   padding: 6px 12px;
   border-radius: 16px;
   background: #f5f5f5;
 }
 
-.top-nav nav a.active {
+.bottom-nav a.active {
   background: #ff584d;
   color: #fff;
 }
