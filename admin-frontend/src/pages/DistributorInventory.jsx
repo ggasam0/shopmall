@@ -28,8 +28,11 @@ const DistributorInventory = () => {
         if (mounted) {
           setSummary(summaryData);
           setProducts(productList);
-          const cacheKey = `distributorInventory:${auth.user_id}`;
-          const saved = localStorage.getItem(cacheKey);
+          const codeKey = summaryData?.code
+            ? `distributorInventory:${summaryData.code}`
+            : null;
+          const legacyKey = `distributorInventory:${auth.user_id}`;
+          const saved = (codeKey && localStorage.getItem(codeKey)) || localStorage.getItem(legacyKey);
           setInventory(saved ? JSON.parse(saved) : {});
         }
       } catch (error) {
@@ -59,8 +62,12 @@ const DistributorInventory = () => {
       setInventoryError("无法获取分销商信息");
       return;
     }
-    const cacheKey = `distributorInventory:${summary.distributor_id}`;
-    localStorage.setItem(cacheKey, JSON.stringify(inventory));
+    const legacyKey = `distributorInventory:${summary.distributor_id}`;
+    const codeKey = summary.code ? `distributorInventory:${summary.code}` : null;
+    localStorage.setItem(legacyKey, JSON.stringify(inventory));
+    if (codeKey) {
+      localStorage.setItem(codeKey, JSON.stringify(inventory));
+    }
     setInventoryMessage("库存已保存到本地");
     setInventoryError("");
   };

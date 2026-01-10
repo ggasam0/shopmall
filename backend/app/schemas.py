@@ -48,9 +48,12 @@ class DashboardSummary(BaseModel):
 
 class DistributorSummary(BaseModel):
     distributor_id: int
+    code: Optional[str] = None
     name: str
     pickup_address: Optional[str] = None
     total_orders: int
+    daily_completed_orders: int
+    monthly_completed_orders: int
     commission: float
     wallet_balance: float
     coupons: int

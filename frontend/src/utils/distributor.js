@@ -34,9 +34,19 @@ export const getDistributorByLocation = (location) => {
 
 export const getStockForDistributor = (productId, distributorCode) => {
   const normalized = normalizeCode(distributorCode || defaultDistributor.code) || "";
-  const seed = normalized
-    .split("")
-    .reduce((total, char) => total + char.charCodeAt(0), 0);
-  const baseStock = 18 + ((productId || 1) * 7 + seed) % 30;
-  return baseStock;
+  if (typeof window === "undefined") {
+    return 0;
+  }
+  const cacheKey = `distributorInventory:${normalized}`;
+  const saved = window.localStorage.getItem(cacheKey);
+  if (!saved) {
+    return 0;
+  }
+  try {
+    const inventory = JSON.parse(saved);
+    const stock = Number(inventory?.[productId] ?? 0);
+    return Number.isFinite(stock) ? stock : 0;
+  } catch (error) {
+    return 0;
+  }
 };
