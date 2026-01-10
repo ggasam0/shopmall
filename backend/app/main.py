@@ -1,5 +1,9 @@
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from openpyxl import load_workbook
 from sqlmodel import Session, select
 
 from app.config import AUTH_CONFIG
@@ -20,6 +24,52 @@ from app.schemas import (
 )
 
 app = FastAPI(title="Fireworks Mall API")
+
+IMAGE_DIR = Path(__file__).resolve().parent / "images"
+IMAGE_DIR.mkdir(exist_ok=True)
+app.mount("/images", StaticFiles(directory=str(IMAGE_DIR)), name="images")
+
+PRODUCT_EXCEL_PATH = Path(__file__).resolve().parent / "商品.xlsx"
+
+
+def load_products_from_excel(session: Session) -> bool:
+    if not PRODUCT_EXCEL_PATH.exists():
+        return False
+
+    workbook = load_workbook(PRODUCT_EXCEL_PATH, data_only=True)
+    sheet = workbook.active
+    headers = [cell.value for cell in sheet[1]]
+    header_map = {header: index for index, header in enumerate(headers)}
+    required_headers = ["商品名称", "类别", "价格", "图片名称"]
+    if not all(header in header_map for header in required_headers):
+        return False
+
+    existing_names = set(session.exec(select(Product.name)).all())
+    created = False
+
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        name = row[header_map["商品名称"]]
+        category = row[header_map["类别"]]
+        price = row[header_map["价格"]]
+        image_name = row[header_map["图片名称"]]
+        if not name or not category or price is None:
+            continue
+        if name in existing_names:
+            continue
+        image_url = f"/images/{image_name}" if image_name else ""
+        session.add(
+            Product(
+                name=str(name).strip(),
+                category=str(category).strip(),
+                price=float(price),
+                image_url=image_url,
+            )
+        )
+        created = True
+
+    if created:
+        session.commit()
+    return created
 
 app.add_middleware(
     CORSMiddleware,
@@ -66,7 +116,9 @@ def on_startup() -> None:
                 )
                 session.commit()
 
-        if not session.exec(select(Product)).first():
+        has_products = bool(session.exec(select(Product)).first())
+        loaded_from_excel = load_products_from_excel(session)
+        if not has_products and not loaded_from_excel:
             session.add(
                 Product(
                     name="夜景礼花套装",
