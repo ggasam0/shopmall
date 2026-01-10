@@ -1,4 +1,7 @@
 from pathlib import Path
+import re
+import zipfile
+import xml.etree.ElementTree as ET
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,6 +37,69 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+XLSX_PATH = Path(__file__).resolve().parent / "商品.xlsx"
+XLSX_NS = {"a": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+
+
+def _column_to_index(column: str) -> int:
+    index = 0
+    for char in column:
+        index = index * 26 + (ord(char) - ord("A") + 1)
+    return index - 1
+
+
+def _load_products_from_xlsx() -> list[dict]:
+    if not XLSX_PATH.exists():
+        return []
+    with zipfile.ZipFile(XLSX_PATH) as workbook:
+        shared = ET.fromstring(workbook.read("xl/sharedStrings.xml"))
+        shared_strings = [
+            "".join(text.text or "" for text in si.iter(f"{{{XLSX_NS['a']}}}t"))
+            for si in shared.iter(f"{{{XLSX_NS['a']}}}si")
+        ]
+        sheet = ET.fromstring(workbook.read("xl/worksheets/sheet1.xml"))
+
+    rows = []
+    for row in sheet.findall("a:sheetData/a:row", XLSX_NS):
+        values: list[str | None] = []
+        for cell in row.findall("a:c", XLSX_NS):
+            ref = cell.get("r") or ""
+            match = re.match(r"([A-Z]+)", ref)
+            if not match:
+                continue
+            index = _column_to_index(match.group(1))
+            while len(values) <= index:
+                values.append(None)
+            value_node = cell.find("a:v", XLSX_NS)
+            if value_node is None:
+                values[index] = None
+                continue
+            if cell.get("t") == "s":
+                values[index] = shared_strings[int(value_node.text)]
+            else:
+                values[index] = value_node.text
+        if values:
+            rows.append(values)
+
+    products = []
+    for row in rows[1:]:
+        if not row or not row[0]:
+            continue
+        name = row[0]
+        category = row[1] if len(row) > 1 else ""
+        price = float(row[2]) if len(row) > 2 and row[2] else 0.0
+        image_name = row[3] if len(row) > 3 else ""
+        products.append(
+            {
+                "name": name,
+                "category": category,
+                "price": price,
+                "image_url": f"/images/{image_name}" if image_name else "",
+                "tags": category or "",
+            }
+        )
+    return products
 
 
 @app.on_event("startup")
@@ -74,25 +140,8 @@ def on_startup() -> None:
 
         has_products = bool(session.exec(select(Product)).first())
         if not has_products:
-            session.add(
-                Product(
-                    name="夜景礼花套装",
-                    category="夜景礼花",
-                    price=298.0,
-                    image_url="https://images.unsplash.com/photo-1509228468518-180dd4864904",
-                    tags="夜景,礼花,套装",
-                    is_featured=True,
-                )
-            )
-            session.add(
-                Product(
-                    name="节庆鞭炮",
-                    category="纸炮",
-                    price=88.0,
-                    image_url="https://images.unsplash.com/photo-1509228468518-180dd4864904",
-                    tags="节庆,鞭炮",
-                )
-            )
+            for payload in _load_products_from_xlsx():
+                session.add(Product(**payload))
             session.commit()
 
         if not session.exec(select(Order)).first():
