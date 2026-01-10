@@ -280,21 +280,6 @@ a {
   font-weight: 600;
 }
 
-.upload-area {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-
-.upload-area input[type="file"] {
-  border: 1px dashed #d6d6d6;
-  padding: 10px;
-  border-radius: 10px;
-  background: #fafafa;
-}
-
-.upload-area button,
 .inventory-actions button {
   border: none;
   background: #ff5d5d;
@@ -305,27 +290,12 @@ a {
   cursor: pointer;
 }
 
-.upload-area button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.upload-preview {
-  margin-top: 16px;
-  background: #fafafa;
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.upload-preview table,
 .inventory-panel table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-.upload-preview th,
-.upload-preview td,
 .inventory-panel th,
 .inventory-panel td {
   border-bottom: 1px solid #eee;
@@ -333,17 +303,23 @@ a {
   text-align: left;
 }
 
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: #666;
-}
-
 .form-success {
   color: #2b8a3e;
   margin: 4px 0 0;
+}
+
+.inventory-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.inventory-filter select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
 }
 
 .inventory-panel input[type="number"] {
