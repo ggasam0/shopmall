@@ -35,7 +35,7 @@ uv venv .venv --python 3.12
 ```bash
 source .venv/bin/activate
 uv pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 0.0.0.0
 ```
 
 **Windows (PowerShell)**
@@ -43,5 +43,5 @@ uvicorn app.main:app --reload
 ```powershell
 .\.venv\Scripts\Activate.ps1
 uv pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 0.0.0.0
 ```
