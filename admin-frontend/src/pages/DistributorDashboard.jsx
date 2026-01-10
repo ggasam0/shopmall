@@ -1,15 +1,19 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../api";
 
 const DistributorDashboard = () => {
   const [summary, setSummary] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [users, setUsers] = useState([]);
   const [inventory, setInventory] = useState({});
   const [inventoryMessage, setInventoryMessage] = useState("");
   const [inventoryError, setInventoryError] = useState("");
   const [orderMessage, setOrderMessage] = useState("");
   const [orderError, setOrderError] = useState("");
+  const [phoneQuery, setPhoneQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("adminAuth");
@@ -23,15 +27,17 @@ const DistributorDashboard = () => {
     let mounted = true;
     const loadSummary = async () => {
       try {
-        const [data, productList, orderList] = await Promise.all([
+        const [data, productList, orderList, userList] = await Promise.all([
           apiRequest(`/distributor/${auth.user_id}/summary`),
           apiRequest("/products"),
-          apiRequest(`/users/${auth.user_id}/orders`)
+          apiRequest("/orders"),
+          apiRequest("/users")
         ]);
         if (mounted) {
           setSummary(data);
           setProducts(productList);
           setOrders(orderList);
+          setUsers(userList);
           const cacheKey = `distributorInventory:${auth.user_id}`;
           const saved = localStorage.getItem(cacheKey);
           setInventory(saved ? JSON.parse(saved) : {});
@@ -41,6 +47,7 @@ const DistributorDashboard = () => {
           setSummary(null);
           setProducts([]);
           setOrders([]);
+          setUsers([]);
         }
       }
     };
@@ -84,6 +91,25 @@ const DistributorDashboard = () => {
       setOrderError("更新订单状态失败");
     }
   };
+
+  const phoneLookup = useMemo(
+    () =>
+      users.reduce((acc, user) => {
+        acc[user.id] = user.phone;
+        return acc;
+      }, {}),
+    [users]
+  );
+  const filteredOrders = useMemo(() => {
+    const trimmed = phoneQuery.trim();
+    return orders.filter((order) => {
+      const matchesStatus =
+        statusFilter === "pending" ? order.status === "待提货" : true;
+      const phone = phoneLookup[order.user_id] || "";
+      const matchesPhone = trimmed ? phone.includes(trimmed) : true;
+      return matchesStatus && matchesPhone;
+    });
+  }, [orders, phoneQuery, statusFilter, phoneLookup]);
 
   return (
     <main className="page dashboard">
@@ -160,37 +186,129 @@ const DistributorDashboard = () => {
           <h3>订单管理</h3>
           <span>待提货可标记为已完成</span>
         </header>
-        {orders.length ? (
+        <div className="order-filters">
+          <div className="order-tabs">
+            <button
+              type="button"
+              className={statusFilter === "all" ? "tab-button active" : "tab-button"}
+              onClick={() => setStatusFilter("all")}
+            >
+              全部订单
+            </button>
+            <button
+              type="button"
+              className={statusFilter === "pending" ? "tab-button active" : "tab-button"}
+              onClick={() => setStatusFilter("pending")}
+            >
+              待提货订单
+            </button>
+          </div>
+          <label className="order-search">
+            <span>手机号</span>
+            <input
+              type="text"
+              placeholder="搜索用户手机号"
+              value={phoneQuery}
+              onChange={(event) => setPhoneQuery(event.target.value)}
+            />
+          </label>
+          <span className="muted">共 {filteredOrders.length} 笔订单</span>
+        </div>
+        {filteredOrders.length ? (
           <table className="order-table">
             <thead>
               <tr>
                 <th>订单号</th>
+                <th>用户电话</th>
                 <th>状态</th>
                 <th>总计</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td>{order.order_number}</td>
-                  <td>{order.status}</td>
-                  <td>¥{order.total.toFixed(2)}</td>
-                  <td>
-                    {order.status === "待提货" ? (
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => handleCompleteOrder(order.id)}
-                      >
-                        标记已完成
-                      </button>
-                    ) : (
-                      <span className="muted">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {filteredOrders.map((order) => {
+                const phone = phoneLookup[order.user_id] || "未知";
+                const isExpanded = expandedOrderId === order.id;
+                return (
+                  <Fragment key={order.id}>
+                    <tr>
+                      <td>{order.order_number}</td>
+                      <td>{phone}</td>
+                      <td>{order.status}</td>
+                      <td>¥{order.total.toFixed(2)}</td>
+                      <td>
+                        <div className="order-actions">
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            onClick={() =>
+                              setExpandedOrderId(isExpanded ? null : order.id)
+                            }
+                          >
+                            {isExpanded ? "收起详情" : "查看详情"}
+                          </button>
+                          {order.status === "待提货" ? (
+                            <button
+                              type="button"
+                              className="ghost-button"
+                              onClick={() => handleCompleteOrder(order.id)}
+                            >
+                              标记已完成
+                            </button>
+                          ) : (
+                            <span className="muted">-</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded ? (
+                      <tr className="order-detail-row">
+                        <td colSpan={5}>
+                          <div className="order-detail">
+                            <div className="detail-grid">
+                              <div>
+                                <span className="label">用户号码</span>
+                                <strong>{phone}</strong>
+                              </div>
+                              <div>
+                                <span className="label">下单时间</span>
+                                <strong>
+                                  {new Date(order.created_at).toLocaleString()}
+                                </strong>
+                              </div>
+                              <div>
+                                <span className="label">订单状态</span>
+                                <strong>{order.status}</strong>
+                              </div>
+                              <div>
+                                <span className="label">订单总计</span>
+                                <strong>¥{order.total.toFixed(2)}</strong>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="label">商品明细</p>
+                              {(order.items || []).length ? (
+                                <ul className="detail-items">
+                                  {order.items.map((item) => (
+                                    <li key={`${order.id}-${item.id}`}>
+                                      <span>{item.name}</span>
+                                      <span>
+                                        ×{item.quantity} · ¥{item.price.toFixed(2)}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="muted">暂无商品明细</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         ) : (
