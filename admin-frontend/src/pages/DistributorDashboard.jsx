@@ -4,6 +4,17 @@ import DistributorNav from "../components/DistributorNav";
 
 const DistributorDashboard = () => {
   const [summary, setSummary] = useState(null);
+  const dailySeries = summary?.daily_completed_order_series ?? [];
+  const monthlySeries = summary?.monthly_completed_order_series ?? [];
+  const buildBars = (series) => {
+    if (!series.length) {
+      return { max: 1, bars: [] };
+    }
+    const max = Math.max(...series.map((item) => item.count), 1);
+    return { max, bars: series };
+  };
+  const dailyBars = buildBars(dailySeries);
+  const monthlyBars = buildBars(monthlySeries);
 
   useEffect(() => {
     const stored = localStorage.getItem("adminAuth");
@@ -74,21 +85,53 @@ const DistributorDashboard = () => {
       <section className="dashboard-panel">
         <header>
           <h3>分销数据</h3>
-          <span>近7天</span>
+          <span>已完成订单</span>
         </header>
-        <div className="sales-chart">
-          <div className="bar" style={{ height: "40%" }} />
-          <div className="bar" style={{ height: "65%" }} />
-          <div className="bar" style={{ height: "50%" }} />
-          <div className="bar" style={{ height: "80%" }} />
-          <div className="bar" style={{ height: "72%" }} />
-          <div className="bar" style={{ height: "55%" }} />
-          <div className="bar" style={{ height: "62%" }} />
+        <div className="chart-block">
+          <div className="chart-title">
+            <strong>近7天每日已完成订单数</strong>
+          </div>
+          <div className="sales-chart">
+            {dailyBars.bars.map((item) => (
+              <div key={item.label} className="bar-group">
+                <div
+                  className="bar"
+                  style={{
+                    height: `${Math.round((item.count / dailyBars.max) * 100)}%`,
+                  }}
+                  title={`${item.label} ${item.count}单`}
+                />
+                <span>{item.label}</span>
+              </div>
+            ))}
+            {!dailySeries.length ? (
+              <div className="empty-chart">暂无数据</div>
+            ) : null}
+          </div>
         </div>
-        <div className="chart-legend">
-          <span>主推套装: 60%</span>
-          <span>家庭聚会: 25%</span>
-          <span>婚庆礼花: 15%</span>
+        <div className="chart-block">
+          <div className="chart-title">
+            <strong>近7月每月已完成订单数量</strong>
+          </div>
+          <div className="sales-chart monthly">
+            {monthlyBars.bars.map((item) => (
+              <div key={item.label} className="bar-group">
+                <div
+                  className="bar"
+                  style={{
+                    height: `${Math.round(
+                      (item.count / monthlyBars.max) * 100
+                    )}%`,
+                  }}
+                  title={`${item.label} ${item.count}单`}
+                />
+                <span>{item.label}</span>
+              </div>
+            ))}
+            {!monthlySeries.length ? (
+              <div className="empty-chart">暂无数据</div>
+            ) : null}
+          </div>
         </div>
       </section>
     </main>

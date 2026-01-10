@@ -672,9 +672,41 @@ a {
   height: 120px;
 }
 
+.sales-chart .bar-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  gap: 6px;
+}
+
 .sales-chart .bar {
   background: linear-gradient(180deg, #ffaf7b, #ff5d5d);
   border-radius: 8px 8px 0 0;
+  width: 100%;
+}
+
+.sales-chart .bar-group span {
+  font-size: 11px;
+  color: #777;
+}
+
+.chart-block + .chart-block {
+  margin-top: 16px;
+}
+
+.chart-title {
+  margin-bottom: 8px;
+  color: #444;
+}
+
+.empty-chart {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  padding: 20px 0;
 }
 
 .chart-legend {

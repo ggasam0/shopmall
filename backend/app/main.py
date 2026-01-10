@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import random
 import re
@@ -382,6 +382,41 @@ def distributor_summary(
             if order.created_at.year == now.year and order.created_at.month == now.month
         ]
     )
+    daily_completed_order_series = []
+    for offset in range(6, -1, -1):
+        day = today - timedelta(days=offset)
+        daily_completed_order_series.append(
+            {
+                "label": day.strftime("%m-%d"),
+                "count": len(
+                    [
+                        order
+                        for order in completed_orders
+                        if order.created_at.date() == day
+                    ]
+                ),
+            }
+        )
+    monthly_completed_order_series = []
+    for offset in range(6, -1, -1):
+        target_month = now.month - offset
+        target_year = now.year
+        while target_month <= 0:
+            target_month += 12
+            target_year -= 1
+        monthly_completed_order_series.append(
+            {
+                "label": f\"{target_year}-{target_month:02d}\",
+                "count": len(
+                    [
+                        order
+                        for order in completed_orders
+                        if order.created_at.year == target_year
+                        and order.created_at.month == target_month
+                    ]
+                ),
+            }
+        )
     return DistributorSummary(
         distributor_id=user.id,
         code=account.username if account else None,
@@ -390,6 +425,8 @@ def distributor_summary(
         total_orders=total_orders,
         daily_completed_orders=daily_completed_orders,
         monthly_completed_orders=monthly_completed_orders,
+        daily_completed_order_series=daily_completed_order_series,
+        monthly_completed_order_series=monthly_completed_order_series,
         commission=commission,
         wallet_balance=1200.0,
         coupons=3,
