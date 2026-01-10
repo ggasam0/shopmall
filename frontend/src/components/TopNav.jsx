@@ -12,17 +12,19 @@ const TopNav = () => {
   const supplierPath = (path) => buildSupplierPath(supplier, path);
 
   return (
-    <header className="top-nav">
-      <div className="brand">
-        <span className="brand-dot" />
-        <div>
-          <h1>{supplier.mallName}</h1>
-          <p>
-            {distributor.name} · {distributor.pickupAddress}
-          </p>
+    <>
+      <header className="top-nav">
+        <div className="brand">
+          <span className="brand-dot" />
+          <div>
+            <h1>{supplier.mallName}</h1>
+            <p>
+              {distributor.name} · {distributor.pickupAddress}
+            </p>
+          </div>
         </div>
-      </div>
-      <nav>
+      </header>
+      <nav className="bottom-nav">
         <NavLink to={supplierPath("/")} end>
           首页
         </NavLink>
@@ -30,7 +32,7 @@ const TopNav = () => {
         <NavLink to={supplierPath("/login")}>登录</NavLink>
         <NavLink to={supplierPath("/profile")}>我的</NavLink>
       </nav>
-    </header>
+    </>
   );
 };
 
