@@ -15,13 +15,33 @@ npm install
 npm run dev
 ```
 
+## 管理后台启动
+
+```bash
+cd admin-frontend
+npm install
+npm run dev
+```
+
 ## 后端启动
 
 ```bash
 cd backend
-uv  venv .venv --python 3.12
-# source .venv/bin/activate 
-.venv\Scripts\activate 
+uv venv .venv --python 3.12
+```
+
+**macOS / Linux**
+
+```bash
+source .venv/bin/activate
+uv pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+**Windows (PowerShell)**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
 uv pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
