@@ -51,6 +51,11 @@ class DashboardSummary(BaseModel):
     featured_products: int
 
 
+class CompletedOrderSeries(BaseModel):
+    label: str
+    count: int
+
+
 class DistributorSummary(BaseModel):
     distributor_id: int
     code: Optional[str] = None
@@ -59,6 +64,8 @@ class DistributorSummary(BaseModel):
     total_orders: int
     daily_completed_orders: int
     monthly_completed_orders: int
+    daily_completed_order_series: list[CompletedOrderSeries]
+    monthly_completed_order_series: list[CompletedOrderSeries]
     commission: float
     wallet_balance: float
     coupons: int
