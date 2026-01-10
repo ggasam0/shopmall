@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api";
+import { useSupplier } from "../store/supplier";
+import { buildSupplierPath } from "../utils/supplier";
 
 const defaultStatus = [
   { label: "待付款", icon: "💳" },
@@ -12,6 +14,8 @@ const defaultStatus = [
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
+  const supplier = useSupplier();
+  const supplierPath = (path) => buildSupplierPath(supplier, path);
 
   useEffect(() => {
     const stored = localStorage.getItem("shopmallUser");
@@ -62,7 +66,7 @@ const Profile = () => {
         <h2>{user?.phone || "未登录"}</h2>
         {!user ? (
           <p>
-            请先 <Link to="/login">登录</Link>
+            请先 <Link to={supplierPath("/login")}>登录</Link>
           </p>
         ) : null}
       </section>

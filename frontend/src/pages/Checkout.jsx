@@ -1,17 +1,21 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../store/cart";
 import { useDistributor } from "../store/distributor";
+import { useSupplier } from "../store/supplier";
+import { buildSupplierPath } from "../utils/supplier";
 
 const Checkout = () => {
   const { items, total, clearCart } = useCart();
   const distributor = useDistributor();
+  const supplier = useSupplier();
+  const supplierPath = (path) => buildSupplierPath(supplier, path);
 
   if (items.length === 0) {
     return (
       <main className="page checkout">
         <h2>订单确认</h2>
         <p className="empty-state">当前没有可结算的商品。</p>
-        <Link className="primary-button" to="/">
+        <Link className="primary-button" to={supplierPath("/")}>
           返回首页
         </Link>
       </main>
@@ -25,7 +29,7 @@ const Checkout = () => {
           <p className="muted">确认订单</p>
           <h2>提货地址</h2>
         </div>
-        <Link className="ghost-link" to="/cart">
+        <Link className="ghost-link" to={supplierPath("/cart")}>
           返回购物车
         </Link>
       </header>

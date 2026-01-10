@@ -1,12 +1,27 @@
 import { createContext, useContext, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { getDistributorByLocation } from "../utils/distributor";
+import { useSupplier } from "./supplier";
+import { defaultDistributor } from "../data/distributors";
 
 const DistributorContext = createContext(null);
 
 export const DistributorProvider = ({ children }) => {
   const location = useLocation();
-  const distributor = useMemo(() => getDistributorByLocation(location), [location]);
+  const supplier = useSupplier();
+
+  const distributor = useMemo(() => {
+    if (supplier?.distributor?.code) {
+      return {
+        code: supplier.distributor.code,
+        name: supplier.distributor.name || defaultDistributor.name,
+        pickupAddress:
+          supplier.distributor.pickupAddress || defaultDistributor.pickupAddress,
+        theme: defaultDistributor.theme
+      };
+    }
+    return getDistributorByLocation(location);
+  }, [location, supplier]);
 
   return (
     <DistributorContext.Provider value={distributor}>

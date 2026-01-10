@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../api";
+import { useSupplier } from "../store/supplier";
+import { buildSupplierPath } from "../utils/supplier";
 
 const Login = () => {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const supplier = useSupplier();
+  const supplierPath = (path) => buildSupplierPath(supplier, path);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -22,7 +26,7 @@ const Login = () => {
         body: JSON.stringify({ phone: phone.trim() })
       });
       localStorage.setItem("shopmallUser", JSON.stringify(user));
-      navigate("/profile");
+      navigate(supplierPath("/profile"));
     } catch (err) {
       setError("登录失败，请稍后重试");
     } finally {

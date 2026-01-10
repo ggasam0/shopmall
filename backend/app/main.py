@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
 
-from app.config import AUTH_CONFIG
+from app.config import AUTH_CONFIG, SUPPLIER_CONFIG
 from app.db import get_session, init_db
 from app.models import AuthAccount, Order, Product, User
 from app.schemas import (
@@ -21,6 +21,7 @@ from app.schemas import (
     PhoneLoginRequest,
     ProductCreate,
     ProductRead,
+    SupplierRead,
     UserRead,
 )
 
@@ -207,6 +208,11 @@ def create_product(
     session.commit()
     session.refresh(product)
     return product
+
+
+@app.get("/suppliers", response_model=list[SupplierRead])
+def list_suppliers() -> list[SupplierRead]:
+    return SUPPLIER_CONFIG
 
 
 

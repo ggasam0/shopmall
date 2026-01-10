@@ -74,3 +74,16 @@ class ProductCreate(BaseModel):
     image_url: str
     tags: Optional[str] = None
     is_featured: Optional[bool] = False
+
+
+class SupplierDistributor(BaseModel):
+    code: str
+    name: str
+    pickup_address: Optional[str] = None
+
+
+class SupplierRead(BaseModel):
+    code: str
+    suffix: str
+    mall_name: str
+    distributor: SupplierDistributor

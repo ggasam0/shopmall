@@ -1,4 +1,4 @@
-import distributorMap, { defaultDistributor, distributorList } from "../data/distributors";
+import distributorMap, { defaultDistributor } from "../data/distributors";
 
 const normalizeCode = (value) => value?.trim().toLowerCase();
 
@@ -32,10 +32,11 @@ export const getDistributorByLocation = (location) => {
   return getDistributor(code);
 };
 
-const distributorOrder = distributorList.map((item) => item.code);
-
 export const getStockForDistributor = (productId, distributorCode) => {
-  const index = Math.max(0, distributorOrder.indexOf(distributorCode));
-  const baseStock = 18 + ((productId || 1) * 7 + index * 11) % 30;
+  const normalized = normalizeCode(distributorCode || defaultDistributor.code) || "";
+  const seed = normalized
+    .split("")
+    .reduce((total, char) => total + char.charCodeAt(0), 0);
+  const baseStock = 18 + ((productId || 1) * 7 + seed) % 30;
   return baseStock;
 };

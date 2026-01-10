@@ -29,3 +29,26 @@ AUTH_CONFIG = [
         },
     },
 ]
+
+SUPPLIER_CONFIG = [
+    {
+        "code": "a",
+        "suffix": "shopa",
+        "mall_name": "A供应商烟花商城",
+        "distributor": {
+            "code": "dist_a",
+            "name": "渠道分销A",
+            "pickup_address": "长沙仓库：长沙市雨花区香樟路168号",
+        },
+    },
+    {
+        "code": "b",
+        "suffix": "shopbb",
+        "mall_name": "B供应商烟花商城",
+        "distributor": {
+            "code": "dist_b",
+            "name": "渠道分销B",
+            "pickup_address": "株洲仓库：株洲市天元区珠江南路88号",
+        },
+    },
+]
