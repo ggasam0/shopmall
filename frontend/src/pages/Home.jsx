@@ -8,19 +8,6 @@ import { useSupplier } from "../store/supplier";
 import { buildSupplierPath } from "../utils/supplier";
 import { useCart } from "../store/cart";
 
-const categories = [
-  "全部类别",
-  "其他类别",
-  "套餐",
-  "手持烟花",
-  "地面喷花",
-  "纸炮",
-  "升空类",
-  "夜景烟花",
-  "日景烟花",
-  "摔炮"
-];
-
 const Home = () => {
   const { products, loading } = useProducts();
   const distributor = useDistributor();
@@ -28,6 +15,18 @@ const Home = () => {
   const { items, addItem, updateQuantity } = useCart();
   const [keyword, setKeyword] = useState("");
   const supplierPath = (path) => buildSupplierPath(supplier, path);
+  const categories = useMemo(() => {
+    const seen = new Set();
+    const list = ["全部类别"];
+    products.forEach((product) => {
+      const category = product.category?.trim();
+      if (category && !seen.has(category)) {
+        seen.add(category);
+        list.push(category);
+      }
+    });
+    return list;
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
     const trimmed = keyword.trim();
