@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
 from sqlalchemy import delete
 
-from app.config import AUTH_CONFIG, SUPPLIER_CONFIG
+from app.config import AUTH_CONFIG, DISTRIBUTOR_CODE_BY_USERNAME, SUPPLIER_CONFIG
 from app.db import engine, get_session, init_db
 from app.models import AuthAccount, DistributorInventory, Order, Product, User
 from app.schemas import (
@@ -364,7 +364,11 @@ def distributor_summary(
     account = session.exec(
         select(AuthAccount).where(AuthAccount.user_id == user_id)
     ).first()
-    distributor_code = account.username if account else None
+    distributor_code = (
+        DISTRIBUTOR_CODE_BY_USERNAME.get(account.username, account.username)
+        if account
+        else None
+    )
     orders = (
         session.exec(
             select(Order).where(Order.distributor_code == distributor_code)
@@ -456,6 +460,5 @@ def list_distributor_orders(
     ).first()
     if not account:
         return []
-    return session.exec(
-        select(Order).where(Order.distributor_code == account.username)
-    ).all()
+    distributor_code = DISTRIBUTOR_CODE_BY_USERNAME.get(account.username, account.username)
+    return session.exec(select(Order).where(Order.distributor_code == distributor_code)).all()
