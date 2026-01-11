@@ -9,12 +9,19 @@ const statusDefinitions = [
 
 const AdminDashboard = () => {
   const [summary, setSummary] = useState(null);
-  const [orderStats, setOrderStats] = useState({
-    totalOrders: 0,
-    completedOrders: 0,
-    completedAmount: 0,
-    dailyCompletedOrders: 0,
-    monthlyCompletedOrders: 0
+  const [orders, setOrders] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [selectedSupplierCode, setSelectedSupplierCode] = useState("all");
+  const [periodMode, setPeriodMode] = useState("day");
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate()
+    ).padStart(2, "0")}`;
+  });
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
   const [supplierOrderStats, setSupplierOrderStats] = useState([]);
   const [dailySeries, setDailySeries] = useState([]);
@@ -33,32 +40,11 @@ const AdminDashboard = () => {
           return;
         }
         setSummary(summaryData);
+        setOrders(orders);
+        setSuppliers(suppliers);
         const completedOrders = orders.filter((order) => order.status === "已完成");
-        const completedAmount = completedOrders.reduce((sum, order) => sum + order.total, 0);
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const dailyCompletedOrders = completedOrders.filter((order) => {
-          const createdAt = new Date(order.created_at);
-          return (
-            createdAt.getFullYear() === today.getFullYear() &&
-            createdAt.getMonth() === today.getMonth() &&
-            createdAt.getDate() === today.getDate()
-          );
-        }).length;
-        const monthlyCompletedOrders = completedOrders.filter((order) => {
-          const createdAt = new Date(order.created_at);
-          return (
-            createdAt.getFullYear() === now.getFullYear() &&
-            createdAt.getMonth() === now.getMonth()
-          );
-        }).length;
-        setOrderStats({
-          totalOrders: orders.length,
-          completedOrders: completedOrders.length,
-          completedAmount,
-          dailyCompletedOrders,
-          monthlyCompletedOrders
-        });
 
         const supplierStats = suppliers.map((supplier) => {
           const supplierOrders = orders.filter(
@@ -70,24 +56,40 @@ const AdminDashboard = () => {
             ).length;
             return acc;
           }, {});
+          const completedAmount = supplierOrders
+            .filter((order) => order.status === "已完成")
+            .reduce((sum, order) => sum + order.total, 0);
           return {
             supplier,
-            statusCounts
+            statusCounts,
+            completedAmount
           };
         });
         const overallStatusCounts = statusDefinitions.reduce((acc, status) => {
           acc[status.key] = orders.filter((order) => order.status === status.status).length;
           return acc;
         }, {});
+        const overallCompletedAmount = orders
+          .filter((order) => order.status === "已完成")
+          .reduce((sum, order) => sum + order.total, 0);
         setSupplierOrderStats([
           {
             supplier: { mall_name: "全部供应商", distributor: { name: "整体" } },
-            statusCounts: overallStatusCounts
+            statusCounts: overallStatusCounts,
+            completedAmount: overallCompletedAmount
           },
           ...supplierStats
         ]);
 
+        const getFilteredOrders = (supplierCode) =>
+          supplierCode === "all"
+            ? orders
+            : orders.filter((order) => order.distributor_code === supplierCode);
+
         const buildDailySeries = () => {
+          const filteredCompleted = getFilteredOrders(selectedSupplierCode).filter(
+            (order) => order.status === "已完成"
+          );
           const series = [];
           for (let offset = 6; offset >= 0; offset -= 1) {
             const day = new Date(today);
@@ -95,7 +97,7 @@ const AdminDashboard = () => {
             const label = `${String(day.getMonth() + 1).padStart(2, "0")}-${String(
               day.getDate()
             ).padStart(2, "0")}`;
-            const count = completedOrders.filter((order) => {
+            const count = filteredCompleted.filter((order) => {
               const createdAt = new Date(order.created_at);
               return (
                 createdAt.getFullYear() === day.getFullYear() &&
@@ -109,6 +111,9 @@ const AdminDashboard = () => {
         };
 
         const buildMonthlySeries = () => {
+          const filteredCompleted = getFilteredOrders(selectedSupplierCode).filter(
+            (order) => order.status === "已完成"
+          );
           const series = [];
           for (let offset = 6; offset >= 0; offset -= 1) {
             const target = new Date(now.getFullYear(), now.getMonth() - offset, 1);
@@ -116,7 +121,7 @@ const AdminDashboard = () => {
               2,
               "0"
             )}`;
-            const count = completedOrders.filter((order) => {
+            const count = filteredCompleted.filter((order) => {
               const createdAt = new Date(order.created_at);
               return (
                 createdAt.getFullYear() === target.getFullYear() &&
@@ -142,7 +147,36 @@ const AdminDashboard = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [selectedSupplierCode]);
+
+  const filteredOrders =
+    selectedSupplierCode === "all"
+      ? orders
+      : orders.filter((order) => order.distributor_code === selectedSupplierCode);
+  const filteredCompletedOrders = filteredOrders.filter((order) => order.status === "已完成");
+  const selectedDateValue = selectedDate ? new Date(`${selectedDate}T00:00:00`) : null;
+  const [selectedYear, selectedMonthValue] = selectedMonth
+    ? selectedMonth.split("-").map((value) => Number(value))
+    : [];
+  const periodCompletedOrders =
+    periodMode === "day" && selectedDateValue
+      ? filteredCompletedOrders.filter((order) => {
+          const createdAt = new Date(order.created_at);
+          return (
+            createdAt.getFullYear() === selectedDateValue.getFullYear() &&
+            createdAt.getMonth() === selectedDateValue.getMonth() &&
+            createdAt.getDate() === selectedDateValue.getDate()
+          );
+        })
+      : filteredCompletedOrders.filter((order) => {
+          const createdAt = new Date(order.created_at);
+          return (
+            createdAt.getFullYear() === selectedYear &&
+            createdAt.getMonth() + 1 === selectedMonthValue
+          );
+        });
+  const periodCompletedCount = periodCompletedOrders.length;
+  const periodCompletedAmount = periodCompletedOrders.reduce((sum, order) => sum + order.total, 0);
 
   const buildBars = (series) => {
     if (!series.length) {
@@ -201,6 +235,10 @@ const AdminDashboard = () => {
                     <span>{status.label}</span>
                   </div>
                 ))}
+                <div>
+                  <strong>¥{(item.completedAmount ?? 0).toFixed(2)}</strong>
+                  <span>已完成金额</span>
+                </div>
               </div>
             </div>
           ))
@@ -212,28 +250,73 @@ const AdminDashboard = () => {
       <section className="dashboard-panel">
         <header>
           <h3>订单统计</h3>
-          <span>整体维度</span>
+          <span>筛选维度</span>
         </header>
         <div className="dashboard-summary">
           <div>
-            <span>累计订单</span>
-            <strong>{orderStats.totalOrders}</strong>
+            <span>供应商</span>
+            <select
+              value={selectedSupplierCode}
+              onChange={(event) => setSelectedSupplierCode(event.target.value)}
+            >
+              <option value="all">全部供应商</option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.distributor.code} value={supplier.distributor.code}>
+                  {supplier.mall_name}
+                </option>
+              ))}
+            </select>
           </div>
+          <div>
+            <span>统计周期</span>
+            <div className="inline-controls">
+              <label>
+                <input
+                  type="radio"
+                  name="period-mode"
+                  value="day"
+                  checked={periodMode === "day"}
+                  onChange={() => setPeriodMode("day")}
+                />
+                按日
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="period-mode"
+                  value="month"
+                  checked={periodMode === "month"}
+                  onChange={() => setPeriodMode("month")}
+                />
+                按月
+              </label>
+            </div>
+          </div>
+          <div>
+            <span>{periodMode === "day" ? "指定日期" : "指定月份"}</span>
+            {periodMode === "day" ? (
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(event) => setSelectedDate(event.target.value)}
+              />
+            ) : (
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+              />
+            )}
+          </div>
+        </div>
+        <div className="dashboard-summary">
           <div>
             <span>已完成订单</span>
-            <strong>{orderStats.completedOrders}</strong>
+            <strong>{periodCompletedCount}</strong>
           </div>
           <div>
-            <span>已完成成交金额</span>
-            <strong>¥{orderStats.completedAmount.toFixed(2)}</strong>
-          </div>
-          <div>
-            <span>今日已完成订单</span>
-            <strong>{orderStats.dailyCompletedOrders}</strong>
-          </div>
-          <div>
-            <span>本月已完成订单</span>
-            <strong>{orderStats.monthlyCompletedOrders}</strong>
+            <span>已完成金额</span>
+            <strong>¥{periodCompletedAmount.toFixed(2)}</strong>
           </div>
         </div>
         <div className="chart-block">
