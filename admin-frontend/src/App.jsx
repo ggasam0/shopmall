@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminInventory from "./pages/AdminInventory";
 import DistributorDashboard from "./pages/DistributorDashboard";
 import DistributorCustomers from "./pages/DistributorCustomers";
 import DistributorInventory from "./pages/DistributorInventory";
@@ -34,6 +35,14 @@ const App = () => {
           element={
             <RequireAuth allow="admin">
               <AdminDashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/inventory"
+          element={
+            <RequireAuth allow="admin">
+              <AdminInventory />
             </RequireAuth>
           }
         />
