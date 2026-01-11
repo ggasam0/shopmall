@@ -74,7 +74,6 @@ const Login = () => {
           <div>
             管理员：admin / admin123
           </div>
-          <div>分销商：dist_a / dist123</div>
         </div>
       </section>
     </main>
