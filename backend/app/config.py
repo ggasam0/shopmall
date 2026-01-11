@@ -1,7 +1,7 @@
 AUTH_CONFIG = [
     {
-        "username": "admin",
-        "password": "admin123",
+        "username": "jason",
+        "password": "jason123",
         "role": "admin",
         "user": {
             "name": "平台管理员",
@@ -9,23 +9,23 @@ AUTH_CONFIG = [
         },
     },
     {
-        "username": "dist_a",
-        "password": "dist123",
+        "username": "luowen",
+        "password": "luowen123",
         "role": "distributor",
         "user": {
-            "name": "渠道分销A",
-            "phone": "13800001111",
-            "pickup_address": "长沙仓库：长沙市雨花区香樟路168号",
+            "name": "罗文烟花商城",
+            "phone": "15915750677",
+            "pickup_address": "广州市花都区赤坭镇丰群村委会旁",
         },
     },
     {
-        "username": "dist_b",
-        "password": "dist456",
+        "username": "chengtian",
+        "password": "chengtian123",
         "role": "distributor",
         "user": {
-            "name": "渠道分销B",
-            "phone": "13800002222",
-            "pickup_address": "株洲仓库：株洲市天元区珠江南路88号",
+            "name": "承天烟花商城",
+            "phone": "13924004222",
+            "pickup_address": "广州市花都区赤坭镇三和庄祠堂旁",
         },
     },
 ]
@@ -34,21 +34,21 @@ SUPPLIER_CONFIG = [
     {
         "code": "a",
         "suffix": "shopa",
-        "mall_name": "A供应商烟花商城",
+        "mall_name": "罗文烟花商城",
         "distributor": {
             "code": "dist_a",
-            "name": "渠道分销A",
-            "pickup_address": "长沙仓库：长沙市雨花区香樟路168号",
+            "name": "罗文烟花商城",
+            "pickup_address": "广州市花都区赤坭镇丰群村委会旁",
         },
     },
     {
         "code": "b",
-        "suffix": "shopbb",
-        "mall_name": "B供应商烟花商城",
+        "suffix": "shopb",
+        "mall_name": "承天烟花商城",
         "distributor": {
             "code": "dist_b",
-            "name": "渠道分销B",
-            "pickup_address": "株洲仓库：株洲市天元区珠江南路88号",
+            "name": "承天烟花商城",
+            "pickup_address": "广州市花都区赤坭镇三和庄祠堂旁",
         },
     },
 ]
