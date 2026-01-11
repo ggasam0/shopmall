@@ -139,6 +139,9 @@ def on_startup() -> None:
                 session.commit()
                 session.refresh(user)
             else:
+                user.name = user_payload["name"]
+                user.role = account["role"]
+                user.phone = user_payload["phone"]
                 user.pickup_address = user_payload.get("pickup_address")
                 session.add(user)
                 session.commit()
