@@ -1,54 +1,140 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api";
+import AdminNav from "../components/AdminNav";
 
-const tasks = [
-  "审核运营活动物料",
-  "处理未发货订单",
-  "新增节庆套装SKU",
-  "更新门店库存预警"
+const statusDefinitions = [
+  { key: "pendingPickup", label: "待提货", status: "待提货" },
+  { key: "completed", label: "已完成", status: "已完成" }
 ];
 
 const AdminDashboard = () => {
   const [summary, setSummary] = useState(null);
   const [orderStats, setOrderStats] = useState({
-    pendingPayment: 0,
-    pendingShipment: 0,
-    pendingReceive: 0,
-    completed: 0
+    totalOrders: 0,
+    completedOrders: 0,
+    completedAmount: 0,
+    dailyCompletedOrders: 0,
+    monthlyCompletedOrders: 0
   });
-  const [products, setProducts] = useState([]);
-  const [distributors, setDistributors] = useState([]);
-  const [selectedDistributorId, setSelectedDistributorId] = useState("");
-  const [selectedDistributorCode, setSelectedDistributorCode] = useState("");
-  const [inventory, setInventory] = useState({});
-  const [inventoryMessage, setInventoryMessage] = useState("");
-  const [inventoryError, setInventoryError] = useState("");
+  const [supplierOrderStats, setSupplierOrderStats] = useState([]);
+  const [dailySeries, setDailySeries] = useState([]);
+  const [monthlySeries, setMonthlySeries] = useState([]);
 
   useEffect(() => {
     let mounted = true;
     const loadSummary = async () => {
       try {
-        const [summaryData, orders] = await Promise.all([
+        const [summaryData, orders, suppliers] = await Promise.all([
           apiRequest("/admin/summary"),
-          apiRequest("/orders")
+          apiRequest("/orders"),
+          apiRequest("/suppliers")
         ]);
         if (!mounted) {
           return;
         }
         setSummary(summaryData);
-        const pendingPayment = orders.filter((order) => order.status === "待付款").length;
-        const pendingShipment = orders.filter((order) => order.status === "待发货").length;
-        const pendingReceive = orders.filter((order) => order.status === "待收货").length;
-        const completed = orders.filter((order) => order.status === "已完成").length;
+        const completedOrders = orders.filter((order) => order.status === "已完成");
+        const completedAmount = completedOrders.reduce((sum, order) => sum + order.total, 0);
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const dailyCompletedOrders = completedOrders.filter((order) => {
+          const createdAt = new Date(order.created_at);
+          return (
+            createdAt.getFullYear() === today.getFullYear() &&
+            createdAt.getMonth() === today.getMonth() &&
+            createdAt.getDate() === today.getDate()
+          );
+        }).length;
+        const monthlyCompletedOrders = completedOrders.filter((order) => {
+          const createdAt = new Date(order.created_at);
+          return (
+            createdAt.getFullYear() === now.getFullYear() &&
+            createdAt.getMonth() === now.getMonth()
+          );
+        }).length;
         setOrderStats({
-          pendingPayment,
-          pendingShipment,
-          pendingReceive,
-          completed
+          totalOrders: orders.length,
+          completedOrders: completedOrders.length,
+          completedAmount,
+          dailyCompletedOrders,
+          monthlyCompletedOrders
         });
+
+        const supplierStats = suppliers.map((supplier) => {
+          const supplierOrders = orders.filter(
+            (order) => order.distributor_code === supplier.distributor.code
+          );
+          const statusCounts = statusDefinitions.reduce((acc, status) => {
+            acc[status.key] = supplierOrders.filter(
+              (order) => order.status === status.status
+            ).length;
+            return acc;
+          }, {});
+          return {
+            supplier,
+            statusCounts
+          };
+        });
+        const overallStatusCounts = statusDefinitions.reduce((acc, status) => {
+          acc[status.key] = orders.filter((order) => order.status === status.status).length;
+          return acc;
+        }, {});
+        setSupplierOrderStats([
+          {
+            supplier: { mall_name: "全部供应商", distributor: { name: "整体" } },
+            statusCounts: overallStatusCounts
+          },
+          ...supplierStats
+        ]);
+
+        const buildDailySeries = () => {
+          const series = [];
+          for (let offset = 6; offset >= 0; offset -= 1) {
+            const day = new Date(today);
+            day.setDate(today.getDate() - offset);
+            const label = `${String(day.getMonth() + 1).padStart(2, "0")}-${String(
+              day.getDate()
+            ).padStart(2, "0")}`;
+            const count = completedOrders.filter((order) => {
+              const createdAt = new Date(order.created_at);
+              return (
+                createdAt.getFullYear() === day.getFullYear() &&
+                createdAt.getMonth() === day.getMonth() &&
+                createdAt.getDate() === day.getDate()
+              );
+            }).length;
+            series.push({ label, count });
+          }
+          return series;
+        };
+
+        const buildMonthlySeries = () => {
+          const series = [];
+          for (let offset = 6; offset >= 0; offset -= 1) {
+            const target = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+            const label = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(
+              2,
+              "0"
+            )}`;
+            const count = completedOrders.filter((order) => {
+              const createdAt = new Date(order.created_at);
+              return (
+                createdAt.getFullYear() === target.getFullYear() &&
+                createdAt.getMonth() === target.getMonth()
+              );
+            }).length;
+            series.push({ label, count });
+          }
+          return series;
+        };
+        setDailySeries(buildDailySeries());
+        setMonthlySeries(buildMonthlySeries());
       } catch (error) {
         if (mounted) {
           setSummary(null);
+          setSupplierOrderStats([]);
+          setDailySeries([]);
+          setMonthlySeries([]);
         }
       }
     };
@@ -58,118 +144,15 @@ const AdminDashboard = () => {
     };
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-    const loadBaseData = async () => {
-      try {
-        const [productList, users] = await Promise.all([
-          apiRequest("/products"),
-          apiRequest("/users")
-        ]);
-        if (!mounted) {
-          return;
-        }
-        const distributorList = users.filter((user) => user.role === "distributor");
-        setProducts(productList);
-        setDistributors(distributorList);
-        if (distributorList.length) {
-          setSelectedDistributorId(String(distributorList[0].id));
-        }
-      } catch (error) {
-        if (mounted) {
-          setProducts([]);
-          setDistributors([]);
-          setSelectedDistributorId("");
-        }
-      }
-    };
-    loadBaseData();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!selectedDistributorId) {
-      setInventory({});
-      setSelectedDistributorCode("");
-      return;
+  const buildBars = (series) => {
+    if (!series.length) {
+      return { max: 1, bars: [] };
     }
-    let mounted = true;
-    const loadInventory = async () => {
-      try {
-        const summaryData = await apiRequest(
-          `/distributor/${selectedDistributorId}/summary`
-        );
-        if (!mounted) {
-          return;
-        }
-        const distributorCode = summaryData?.code || "";
-        setSelectedDistributorCode(distributorCode);
-        if (!distributorCode) {
-          setInventory({});
-          setInventoryError("无法获取分销商编码");
-          return;
-        }
-        const inventoryList = await apiRequest(`/inventory/${distributorCode}`);
-        if (!mounted) {
-          return;
-        }
-        const nextInventory = inventoryList.reduce((acc, item) => {
-          acc[item.product_id] = item.stock;
-          return acc;
-        }, {});
-        setInventory(nextInventory);
-        setInventoryMessage("");
-        setInventoryError("");
-      } catch (error) {
-        if (mounted) {
-          setInventory({});
-          setInventoryError("库存加载失败，请稍后重试");
-        }
-      }
-    };
-    loadInventory();
-    return () => {
-      mounted = false;
-    };
-  }, [selectedDistributorId]);
-
-  const handleInventoryChange = (productId, value) => {
-    setInventory((prev) => ({
-      ...prev,
-      [productId]: Number(value)
-    }));
-    setInventoryMessage("");
-    setInventoryError("");
+    const max = Math.max(...series.map((item) => item.count), 1);
+    return { max, bars: series };
   };
-
-  const handleSaveInventory = () => {
-    if (!selectedDistributorId) {
-      setInventoryError("请先选择分销商");
-      return;
-    }
-    if (!selectedDistributorCode) {
-      setInventoryError("无法获取分销商编码");
-      return;
-    }
-    const items = Object.entries(inventory).map(([productId, stock]) => ({
-      product_id: Number(productId),
-      stock: Number(stock)
-    }));
-    apiRequest(`/inventory/${selectedDistributorCode}`, {
-      method: "PUT",
-      body: JSON.stringify({ items })
-    })
-      .then(() => {
-        setInventoryMessage("库存已保存到数据库");
-        setInventoryError("");
-      })
-      .catch(() => {
-        setInventoryError("库存保存失败，请稍后重试");
-        setInventoryMessage("");
-      });
-  };
+  const dailyBars = buildBars(dailySeries);
+  const monthlyBars = buildBars(monthlySeries);
 
   const stats = [
     { label: "今日成交额", value: summary ? `¥${summary.total_sales.toFixed(2)}` : "--" },
@@ -197,101 +180,100 @@ const AdminDashboard = () => {
         ))}
       </section>
 
-      <section className="dashboard-panel">
-        <header>
-          <h3>今日任务</h3>
-          <span>管理后台</span>
-        </header>
-        <ul>
-          {tasks.map((task) => (
-            <li key={task}>{task}</li>
-          ))}
-        </ul>
-      </section>
+      <AdminNav />
 
       <section className="dashboard-panel">
         <header>
           <h3>订单状态</h3>
-          <span>快速入口</span>
+          <span>按供应商查看</span>
         </header>
-        <div className="status-grid">
-          <div>
-            <strong>{orderStats.pendingPayment}</strong>
-            <span>待付款</span>
-          </div>
-          <div>
-            <strong>{orderStats.pendingShipment}</strong>
-            <span>待发货</span>
-          </div>
-          <div>
-            <strong>{orderStats.pendingReceive}</strong>
-            <span>待收货</span>
-          </div>
-          <div>
-            <strong>{orderStats.completed}</strong>
-            <span>已完成</span>
-          </div>
-        </div>
+        {supplierOrderStats.length ? (
+          supplierOrderStats.map((item) => (
+            <div key={item.supplier.mall_name} className="status-group">
+              <div className="status-group-header">
+                <strong>{item.supplier.mall_name}</strong>
+                <span className="muted">{item.supplier.distributor.name}</span>
+              </div>
+              <div className="status-grid">
+                {statusDefinitions.map((status) => (
+                  <div key={`${item.supplier.mall_name}-${status.key}`}>
+                    <strong>{item.statusCounts[status.key] ?? 0}</strong>
+                    <span>{status.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="empty-state">暂无订单数据。</p>
+        )}
       </section>
 
       <section className="dashboard-panel">
         <header>
-          <h3>分销商库存管理</h3>
-          <span>筛选分销商查看并维护库存</span>
+          <h3>订单统计</h3>
+          <span>整体维度</span>
         </header>
-        {distributors.length ? (
-          <label className="inventory-filter">
-            分销商：
-            <select
-              value={selectedDistributorId}
-              onChange={(event) => setSelectedDistributorId(event.target.value)}
-            >
-              {distributors.map((distributor) => (
-                <option key={distributor.id} value={distributor.id}>
-                  {distributor.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <p className="empty-state">暂无分销商数据。</p>
-        )}
-        <div className="inventory-panel">
-          {products.length && selectedDistributorId ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>商品名称</th>
-                  <th>类别</th>
-                  <th>当前库存</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((product) => (
-                  <tr key={product.id}>
-                    <td>{product.name}</td>
-                    <td>{product.category}</td>
-                    <td>
-                      <input
-                        type="number"
-                        min="0"
-                        value={inventory[product.id] ?? 0}
-                        onChange={(event) => handleInventoryChange(product.id, event.target.value)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="empty-state">暂无商品或分销商数据，无法维护库存。</p>
-          )}
-          <div className="inventory-actions">
-            <button type="button" onClick={handleSaveInventory} disabled={!selectedDistributorId}>
-              保存库存
-            </button>
-            {inventoryError ? <p className="form-error">{inventoryError}</p> : null}
-            {inventoryMessage ? <p className="form-success">{inventoryMessage}</p> : null}
+        <div className="dashboard-summary">
+          <div>
+            <span>累计订单</span>
+            <strong>{orderStats.totalOrders}</strong>
+          </div>
+          <div>
+            <span>已完成订单</span>
+            <strong>{orderStats.completedOrders}</strong>
+          </div>
+          <div>
+            <span>已完成成交金额</span>
+            <strong>¥{orderStats.completedAmount.toFixed(2)}</strong>
+          </div>
+          <div>
+            <span>今日已完成订单</span>
+            <strong>{orderStats.dailyCompletedOrders}</strong>
+          </div>
+          <div>
+            <span>本月已完成订单</span>
+            <strong>{orderStats.monthlyCompletedOrders}</strong>
+          </div>
+        </div>
+        <div className="chart-block">
+          <div className="chart-title">
+            <strong>近7天每日已完成订单数</strong>
+          </div>
+          <div className="sales-chart">
+            {dailyBars.bars.map((item) => (
+              <div key={item.label} className="bar-group">
+                <div
+                  className="bar"
+                  style={{
+                    height: `${Math.round((item.count / dailyBars.max) * 100)}%`,
+                  }}
+                  title={`${item.label} ${item.count}单`}
+                />
+                <span>{item.label}</span>
+              </div>
+            ))}
+            {!dailySeries.length ? <div className="empty-chart">暂无数据</div> : null}
+          </div>
+        </div>
+        <div className="chart-block">
+          <div className="chart-title">
+            <strong>近7月每月已完成订单数量</strong>
+          </div>
+          <div className="sales-chart monthly">
+            {monthlyBars.bars.map((item) => (
+              <div key={item.label} className="bar-group">
+                <div
+                  className="bar"
+                  style={{
+                    height: `${Math.round((item.count / monthlyBars.max) * 100)}%`,
+                  }}
+                  title={`${item.label} ${item.count}单`}
+                />
+                <span>{item.label}</span>
+              </div>
+            ))}
+            {!monthlySeries.length ? <div className="empty-chart">暂无数据</div> : null}
           </div>
         </div>
       </section>
