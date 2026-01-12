@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiRequest } from "../api";
 import { useSupplier } from "../store/supplier";
 import { buildSupplierPath } from "../utils/supplier";
@@ -9,8 +9,10 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const supplier = useSupplier();
   const supplierPath = (path) => buildSupplierPath(supplier, path);
+  const loginNotice = location.state?.message;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -26,7 +28,9 @@ const Login = () => {
         body: JSON.stringify({ phone: phone.trim() })
       });
       localStorage.setItem("shopmallUser", JSON.stringify(user));
-      navigate(supplierPath("/profile"));
+      window.dispatchEvent(new Event("shopmall-user-change"));
+      const redirectTo = location.state?.from || supplierPath("/profile");
+      navigate(redirectTo);
     } catch (err) {
       setError("登录失败，请稍后重试");
     } finally {
@@ -41,6 +45,7 @@ const Login = () => {
           <h2>手机号码免密登录</h2>
           <p>输入手机号即可进入烟花商城</p>
         </div>
+        {loginNotice ? <p className="form-error">{loginNotice}</p> : null}
         <form className="login-form" onSubmit={handleSubmit}>
           <label>
             手机号

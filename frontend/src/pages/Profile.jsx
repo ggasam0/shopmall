@@ -15,6 +15,13 @@ const Profile = () => {
   const supplier = useSupplier();
   const supplierPath = (path) => buildSupplierPath(supplier, path);
 
+  const handleLogout = () => {
+    localStorage.removeItem("shopmallUser");
+    setUser(null);
+    setOrders([]);
+    window.dispatchEvent(new Event("shopmall-user-change"));
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem("shopmallUser");
     if (stored) {
@@ -62,7 +69,11 @@ const Profile = () => {
           <p>
             请先 <Link to={supplierPath("/login")}>登录</Link>
           </p>
-        ) : null}
+        ) : (
+          <button className="ghost-button" type="button" onClick={handleLogout}>
+            退出登录
+          </button>
+        )}
       </section>
 
       <section className="orders">

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../api";
 import { useCart } from "../store/cart";
@@ -10,11 +10,16 @@ const Checkout = () => {
   const { items, total, clearCart } = useCart();
   const distributor = useDistributor();
   const supplier = useSupplier();
+  const navigate = useNavigate();
   const supplierPath = (path) => buildSupplierPath(supplier, path);
   const [user, setUser] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [createdOrder, setCreatedOrder] = useState(null);
+  const loginRedirectState = {
+    from: supplierPath("/checkout"),
+    message: "登录后才能提交订单。"
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("shopmallUser");
@@ -37,7 +42,7 @@ const Checkout = () => {
 
   const handleCreateOrder = async () => {
     if (!user?.id) {
-      setError("请先登录后再提交订单。");
+      navigate(supplierPath("/login"), { state: loginRedirectState });
       return;
     }
     setSubmitting(true);
@@ -130,7 +135,11 @@ const Checkout = () => {
         <div className="checkout-actions">
           {error ? <p className="form-error">{error}</p> : null}
           {!user ? (
-            <Link className="ghost-link" to={supplierPath("/login")}>
+            <Link
+              className="ghost-link"
+              to={supplierPath("/login")}
+              state={loginRedirectState}
+            >
               登录后提交订单
             </Link>
           ) : null}
