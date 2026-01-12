@@ -31,16 +31,15 @@ python3.12 -m pip install uv
 ### 2) 拉取代码
 
 ```bash
-cd /opt
+cd /root
 sudo git clone <your-repo-url> shopmall
-sudo chown -R $USER:$USER /opt/shopmall
-cd /opt/shopmall
+cd /root/shopmall/shopmall
 ```
 
 ### 3) 后端启动（FastAPI）
 
 ```bash
-cd /opt/shopmall/backend
+cd /root/shopmall/shopmall/backend
 uv venv .venv --python 3.12
 source .venv/bin/activate
 uv pip install -r requirements.txt
@@ -52,11 +51,11 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 ### 4) 前端构建（商城与管理后台）
 
 ```bash
-cd /opt/shopmall/frontend
+cd /root/shopmall/shopmall/frontend
 npm install
 npm run build
 
-cd /opt/shopmall/admin-frontend
+cd /root/shopmall/shopmall/admin-frontend
 npm install
 npm run build
 ```
@@ -65,7 +64,7 @@ npm run build
 
 ### 5) Nginx 反向代理与静态资源配置（示例）
 
-编辑 `/etc/nginx/sites-available/shopmall`：
+编辑 `/etc/nginx/conf.d/shopmall.conf`：
 
 ```nginx
 server {
@@ -74,13 +73,13 @@ server {
 
     # 商城前端
     location / {
-        root /opt/shopmall/frontend/dist;
+        root /root/shopmall/shopmall/frontend/dist;
         try_files $uri /index.html;
     }
 
     # 管理后台
     location /admin/ {
-        alias /opt/shopmall/admin-frontend/dist/;
+        alias /root/shopmall/shopmall/admin-frontend/dist/;
         try_files $uri /admin/index.html;
     }
 
@@ -98,9 +97,26 @@ server {
 启用并重载：
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/shopmall /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
+```
+
+### 7) 一键启停脚本（后端）
+
+脚本位置：`scripts/shopmallctl.sh`
+
+```bash
+cd /root/shopmall/shopmall
+chmod +x scripts/shopmallctl.sh
+
+# 启动
+./scripts/shopmallctl.sh start
+
+# 停止
+./scripts/shopmallctl.sh stop
+
+# 查看状态
+./scripts/shopmallctl.sh status
 ```
 
 ### 6) 域名注册与解析
