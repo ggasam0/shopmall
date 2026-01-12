@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import TopNav from "./components/TopNav";
 import CategoryList from "./pages/CategoryList";
+import CategoryMenu from "./pages/CategoryMenu";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -23,6 +24,8 @@ const AppContent = () => {
           <Route path="/" element={<Home />} />
           <Route path="/:supplierSuffix" element={<Home />} />
           <Route path="/d/:distributorCode" element={<Home />} />
+          <Route path="/categories" element={<CategoryMenu />} />
+          <Route path="/:supplierSuffix/categories" element={<CategoryMenu />} />
           <Route path="/category/:categoryName" element={<CategoryList />} />
           <Route path="/:supplierSuffix/category/:categoryName" element={<CategoryList />} />
           <Route path="/product/:productId" element={<ProductDetail />} />

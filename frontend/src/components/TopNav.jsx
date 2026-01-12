@@ -28,6 +28,7 @@ const TopNav = () => {
         <NavLink to={supplierPath("/")} end>
           首页
         </NavLink>
+        <NavLink to={supplierPath("/categories")}>分类</NavLink>
         <NavLink to={supplierPath("/cart")}>购物车 ({itemCount})</NavLink>
         <NavLink to={supplierPath("/login")}>登录</NavLink>
         <NavLink to={supplierPath("/profile")}>我的</NavLink>
