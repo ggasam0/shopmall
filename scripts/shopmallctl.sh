@@ -33,9 +33,12 @@ start() {
   fi
 
   echo "启动后端..."
-  nohup "$VENV_BIN/uvicorn" app.main:app --host 0.0.0.0 --port 8000 \
-    >"$LOG_FILE" 2>&1 &
-  echo $! >"$PID_FILE"
+  (
+    cd "$BACKEND_DIR"
+    nohup "$VENV_BIN/uvicorn" app.main:app --host 0.0.0.0 --port 8000 \
+      >"$LOG_FILE" 2>&1 &
+    echo $! >"$PID_FILE"
+  )
   echo "已启动，PID: $(cat "$PID_FILE")"
 }
 
