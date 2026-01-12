@@ -104,11 +104,18 @@ const Home = () => {
             const quantity = quantities[product.id] ?? 0;
             return (
               <article key={product.id} className="product-card">
-                <img src={resolveImageUrl(product.image_url)} alt={product.name} />
+                <Link
+                  className="product-link"
+                  to={supplierPath(`/product/${product.id}`)}
+                >
+                  <img src={resolveImageUrl(product.image_url)} alt={product.name} />
+                  <div>
+                    <h4>{product.name}</h4>
+                    <p>¥{product.price.toFixed(2)}</p>
+                    <p className="stock">库存 {stock}</p>
+                  </div>
+                </Link>
                 <div>
-                  <h4>{product.name}</h4>
-                  <p>¥{product.price.toFixed(2)}</p>
-                  <p className="stock">库存 {stock}</p>
                   <div className="quantity">
                     <button
                       type="button"
