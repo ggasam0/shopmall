@@ -69,8 +69,8 @@ npm run build
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com www.your-domain.com;
-
+    #server_name your-domain.com www.your-domain.com;
+    server_name 165.154.254.164 _;
     # 商城前端
     location / {
         root /root/shopmall/shopmall/frontend/dist;
@@ -108,6 +108,11 @@ sudo systemctl reload nginx
 ```bash
 cd /root/shopmall/shopmall
 chmod +x scripts/shopmallctl.sh
+
+sudo chmod o+x /root
+sudo chmod -R o+r /root/shopmall/shopmall/frontend/dist
+sudo chmod -R o+r /root/shopmall/shopmall/admin-frontend/dist
+
 
 # 启动
 ./scripts/shopmallctl.sh start
