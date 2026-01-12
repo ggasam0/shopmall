@@ -755,6 +755,74 @@ a {
   margin-top: 12px;
 }
 
+.category-menu {
+  max-width: 1200px;
+}
+
+.category-layout {
+  display: flex;
+  background: #fff;
+  border-radius: 22px;
+  overflow: hidden;
+  min-height: 520px;
+  border: 1px solid #f0f0f0;
+}
+
+.category-sidebar {
+  width: 140px;
+  background: #f7f7f7;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+.category-sidebar button {
+  border: none;
+  background: transparent;
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  border-left: 4px solid transparent;
+}
+
+.category-sidebar button.active {
+  background: #fff;
+  color: #ff5d5d;
+  font-weight: 600;
+  border-left-color: #ff5d5d;
+}
+
+.category-content {
+  flex: 1;
+  padding: 20px 22px 26px;
+}
+
+.category-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.category-content-header h3 {
+  margin: 0;
+}
+
+.category-menu .product-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.category-menu .product-card img {
+  height: 120px;
+}
+
+.category-menu .empty-state {
+  margin-top: 60px;
+}
+
 .product-detail .detail-card {
   display: grid;
   grid-template-columns: minmax(200px, 320px) 1fr;
