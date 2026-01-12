@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useCart } from "../store/cart";
 import { useDistributor } from "../store/distributor";
 import { useSupplier } from "../store/supplier";
@@ -10,6 +11,21 @@ const TopNav = () => {
   const supplier = useSupplier();
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const supplierPath = (path) => buildSupplierPath(supplier, path);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const syncUser = () => {
+      const stored = localStorage.getItem("shopmallUser");
+      setUser(stored ? JSON.parse(stored) : null);
+    };
+    syncUser();
+    window.addEventListener("storage", syncUser);
+    window.addEventListener("shopmall-user-change", syncUser);
+    return () => {
+      window.removeEventListener("storage", syncUser);
+      window.removeEventListener("shopmall-user-change", syncUser);
+    };
+  }, []);
 
   return (
     <>
@@ -30,8 +46,9 @@ const TopNav = () => {
         </NavLink>
         <NavLink to={supplierPath("/categories")}>分类</NavLink>
         <NavLink to={supplierPath("/cart")}>购物车 ({itemCount})</NavLink>
-        <NavLink to={supplierPath("/login")}>登录</NavLink>
-        <NavLink to={supplierPath("/profile")}>我的</NavLink>
+        <NavLink to={supplierPath("/profile")}>
+          {user ? "我的" : "登录"}
+        </NavLink>
       </nav>
     </>
   );
