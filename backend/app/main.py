@@ -289,6 +289,11 @@ def create_order(
     user = None
     if payload.phone:
         user = session.exec(select(User).where(User.phone == payload.phone)).first()
+        if not user:
+            user = User(name="手机用户", phone=payload.phone, role="customer")
+            session.add(user)
+            session.commit()
+            session.refresh(user)
     elif payload.user_id:
         user = session.get(User, payload.user_id)
     if not user:
