@@ -1,5 +1,5 @@
 # shopmall
-
+https://news.qq.com/rain/a/20260920A0B1NS00?id=20260920A0B1NS00&path=a&app=news&suid=&redirect_pc=1
 烟花商城全栈示例：React 前端 + FastAPI 后端 + SQLite 数据库。
 
 ## 目录结构
